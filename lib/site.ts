@@ -1,7 +1,7 @@
 export const site = {
   name: "SwitchQuote",
   tagline:
-    "Quote-ready Spanish–English interview transcripts — not meeting notes, not auto-translate.",
+    "Keep the Spanish and the English. Quote-ready Spanish–English interview transcripts — not meeting notes, not auto-translate.",
   url: "https://switchquote.workers.dev",
   phrases: {
     transcribe: "Transcribe, don't translate",

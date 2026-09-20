@@ -14,7 +14,7 @@ service = "switchquote"
 [[d1_databases]]
 binding = "DB"
 database_name = "switchquote"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "3cef716a-f944-410f-a3f6-f71f8fb662b2"
 migrations_dir = "migrations"
 
 [images]

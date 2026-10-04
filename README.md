@@ -154,7 +154,7 @@ An engine is **enabled** only when every key it needs for its route is set and i
 Engines without per-word language (`caps.languageTags === "none"`) go through `lib/langtag.ts`:
 
 - `LANG_TAGGER=llm` (default): one `LANG_TAGGER_MODEL` call (default `google/gemini-3.5-flash-lite` via OpenRouter)
-  per ~2,500 words returns language runs over indexed tokens. Lines whose answer doesn't fit fall back to the
+  per ~2,500 words returns language runs over indexed tokens ("0s 4e 9s", JSON-schema constrained). Lines whose answer doesn't fit fall back to the
   heuristic. Logged as its own spend event (`kind='tag'`, `engine='langtag'`, provider-returned cost).
   Measured ≈ $0.0006–0.0007 per transcript minute (2026-10-05).
 - `LANG_TAGGER=heuristic`: free lexicon + orthography rules; ambiguous words inherit their neighbours' language.

@@ -18,7 +18,7 @@ test("heuristic: lexicon + orthography, ambiguous words inherit", () => {
 
 test("llm tagger: applies letters, falls back per line on length mismatch, sums provider cost", async () => {
   const fetchImpl = (async () =>
-    new Response(JSON.stringify({ choices: [{ message: { content: '{"lines":[[[0,"s"],[2,"e"]],[[0,"e"],[5,"s"]]]}' } }], usage: { cost: 0.0002 } }), { status: 200 })) as typeof fetch;
+    new Response(JSON.stringify({ choices: [{ message: { content: '{"lines":["0s 2e","0e 5s"]}' } }], usage: { cost: 0.0002 } }), { status: 200 })) as typeof fetch;
   const r = await tagLanguages([seg("Hola mi friend"), seg("ok bueno")], { mode: "llm", apiKey: "k", model: "m", referer: "r", fetchImpl });
   assert.deepEqual(r.segments[0].words.map((w) => w.lang), ["es", "es", "en"]);
   assert.equal(r.segments[1].words[1].lang, "es"); // heuristic fallback for the mismatched line
@@ -36,8 +36,10 @@ test("tagger without key or in heuristic mode makes no paid call", async () => {
 });
 
 test("expandRuns validates and fills", () => {
-  assert.deepEqual(expandRuns([[0, "s"], [2, "e"]], 4), ["es", "es", "en", "en"]);
-  assert.equal(expandRuns([[1, "s"]], 3), null);
-  assert.equal(expandRuns([[0, "s"], [0, "e"]], 3), null);
-  assert.equal(expandRuns([[0, "x"]], 3), null);
+  assert.deepEqual(expandRuns("0s 2e", 4), ["es", "es", "en", "en"]);
+  assert.deepEqual(expandRuns("0:s, 1:o", 2), ["es", "other"]);
+  assert.equal(expandRuns("1s", 3), null);
+  assert.equal(expandRuns("0s 0e", 3), null);
+  assert.equal(expandRuns("0x", 3), null);
+  assert.equal(expandRuns([[0, "s"]], 3), null);
 });

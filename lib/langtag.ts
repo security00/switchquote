@@ -7,7 +7,7 @@ import type { EngineCost } from "./engines/types";
  * - "heuristic": free, deterministic. Spanish/English function-word lexicons + orthography (ñ, accents,
  *   ¿¡, -ción, -ing, th…); ambiguous words inherit the language of their neighbours.
  * - "llm": one cheap OpenRouter text call per ~2,500 words returns language runs per line over
- *   indexed tokens ([[0,"s"],[4,"e"]]); any line whose runs don't fit falls back to the heuristic. Cost = OpenRouter usage.cost,
+ *   indexed tokens ("0s 4e", JSON-schema constrained); any line whose runs don't fit falls back to the heuristic. Cost = OpenRouter usage.cost,
  *   recorded as its own spend event (kind "tag").
  * Neither changes a single transcript word; only `lang` is filled in.
  */
@@ -75,15 +75,26 @@ export function heuristicTag(segments: Segment[]): Segment[] {
 const CODE: Record<string, Lang> = { e: "en", en: "en", s: "es", es: "es", o: "other", other: "other" };
 const SYSTEM =
   "You label the spoken language of every token in Spanish–English code-switched interview transcript lines. " +
-  'Each input line is a list of tokens written as "index:token". For each line return the language runs as ' +
-  '[[startIndex, "e"|"s"|"o"], ...] in order, where a run lasts until the next run starts: "e" = English, "s" = Spanish, ' +
-  '"o" = names, numbers, fillers or unclear. The first run must start at 0. Loanwords take the language of the sentence around them. ' +
-  'Return JSON only: {"lines": [ [[0,"s"],[4,"e"]], ... ]} with exactly one entry per input line, same order.';
+  'Each input line is a list of tokens written as "index:token". For each line return its language runs as one string ' +
+  'of "<startIndex><letter>" items separated by spaces, e.g. "0s 4e 9s": a run lasts until the next run starts; ' +
+  '"e" = English, "s" = Spanish, "o" = names, numbers, fillers or unclear. The first run must start at 0. ' +
+  "Loanwords take the language of the sentence around them. " +
+  'Return JSON only: {"lines": ["0s 4e", "0e", ...]} with exactly one string per input line, same order.';
 
-/** Runs [[start, code], ...] → one Lang per token, or null if the runs don't describe this line. */
+const SCHEMA = {
+  name: "language_runs",
+  strict: true,
+  schema: { type: "object", properties: { lines: { type: "array", items: { type: "string" } } }, required: ["lines"], additionalProperties: false },
+};
+
+/** Runs "0s 4e 9s" → one Lang per token, or null if the runs don't describe this line. */
 export function expandRuns(runs: unknown, n: number): Lang[] | null {
-  if (!Array.isArray(runs) || !runs.length) return null;
-  const parsed = runs.map((r) => (Array.isArray(r) ? { i: Number(r[0]), lang: CODE[String(r[1] ?? "").toLowerCase()] } : null));
+  if (typeof runs !== "string" || !runs.trim()) return null;
+  const items = runs.trim().split(/[\s,;]+/);
+  const parsed = items.map((it) => {
+    const m = /^(\d+)\s*[:=]?\s*([a-z]+)$/i.exec(it);
+    return m ? { i: Number(m[1]), lang: CODE[m[2].toLowerCase()] } : null;
+  });
   if (parsed.some((r) => !r || !Number.isInteger(r.i) || !r.lang || r.i < 0 || r.i >= n)) return null;
   const list = parsed as { i: number; lang: Lang }[];
   if (list[0].i !== 0 || list.some((r, k) => k > 0 && r.i <= list[k - 1].i)) return null;
@@ -102,7 +113,7 @@ async function llmChunk(lines: string[][], apiKey: string, model: string, refere
         { role: "system", content: SYSTEM },
         { role: "user", content: JSON.stringify({ lines: lines.map((l) => l.map((w, i) => `${i}:${w}`).join(" ")) }) },
       ],
-      response_format: { type: "json_object" },
+      response_format: { type: "json_schema", json_schema: SCHEMA },
       reasoning: { effort: "minimal" },
       usage: { include: true },
       temperature: 0,

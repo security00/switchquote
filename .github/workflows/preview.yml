@@ -1,0 +1,49 @@
+name: Preview version (not deployed)
+
+# Uploads a Worker version with the preview alias, for QA that must not change the live site.
+# It never runs `wrangler deploy` or D1 migrations; production keeps serving the version
+# deployed from main. Overrides come from .github/preview.env (KEY=VALUE lines) on the branch.
+# Preview URL: https://preview-switchquote.potter-faa.workers.dev
+
+on:
+  push:
+    branches:
+      - "cursor/preview-*"
+
+concurrency:
+  group: preview-switchquote
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    if: github.repository == 'security00/switchquote'
+    runs-on: ubuntu-latest
+    name: Upload preview version
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Check this is the switchquote worker
+        run: bash scripts/check-worker-identity.sh
+      - run: npm test
+      - name: Build for Cloudflare
+        run: npm run cf:build
+      - name: Upload version with preview alias
+        run: |
+          args=(--name switchquote --preview-alias preview --message "preview ${GITHUB_SHA::7}" --var DEPLOY_CHANNEL:preview)
+          if [ -f .github/preview.env ]; then
+            while IFS='=' read -r key value; do
+              [[ -z "$key" || "$key" == \#* ]] && continue
+              [[ "$key" =~ ^[A-Z_]+$ ]] || { echo "Bad key: $key"; exit 1; }
+              [[ "$key" == DEPLOY_CHANNEL ]] && continue
+              args+=(--var "$key:$value")
+            done < .github/preview.env
+          fi
+          echo "wrangler versions upload ${args[*]}"
+          npx wrangler versions upload "${args[@]}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

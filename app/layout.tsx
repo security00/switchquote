@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   },
   description: site.tagline,
   metadataBase: new URL(site.url),
+  robots: site.indexable ? undefined : { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

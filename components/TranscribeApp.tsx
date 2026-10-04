@@ -257,7 +257,7 @@ export function TranscribeApp({ introTop, introBody }: { introTop?: React.ReactN
 
   return (
     <div>
-      <div className="grid gap-x-12 gap-y-6 [grid-template-areas:'top'_'tool'_'body'] lg:grid-cols-[minmax(0,1fr)_420px] lg:[grid-template-areas:'top_tool'_'body_tool']">
+      <div className="grid gap-x-12 gap-y-6 [grid-template-areas:'top'_'tool'_'body'] lg:grid-cols-[minmax(0,1fr)_420px] lg:grid-rows-[auto_1fr] lg:[grid-template-areas:'top_tool'_'body_tool']">
         <div className="[grid-area:top]">{introTop}</div>
         <div className="[grid-area:tool]">{toolColumn}</div>
         {introBody ? <div className="[grid-area:body]">{introBody}</div> : null}

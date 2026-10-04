@@ -9,8 +9,6 @@ export type AppEnv = {
   SIGNUP_FREE_MINUTES?: string;
   MAX_FILE_MB?: string;
   MAX_DURATION_MIN?: string;
-  /** List price of the default STT engine, used for the USD breaker. */
-  STT_COST_PER_MIN_USD?: string;
   /** Upper estimate for one Translate to English call (actual OpenRouter cost is recorded after). */
   TRANSLATE_ESTIMATE_USD?: string;
   USER_DAILY_SPEND_LIMIT_USD?: string;
@@ -21,7 +19,27 @@ export type AppEnv = {
   ALERT_EMAIL_FROM?: string;
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
+  /** Default transcription engine id (lib/engines/registry.ts). STT_PROVIDER is the legacy name. */
+  STT_ENGINE?: string;
   STT_PROVIDER?: string;
+  /** Comma-separated Google emails allowed to override the engine per request (x-sq-engine header). */
+  ADMIN_EMAILS?: string;
+  /** Comma-separated engine ids switched off regardless of keys. */
+  ENGINES_DISABLED?: string;
+  /** Fallback switch detector for engines without per-word language: llm | heuristic | off. */
+  LANG_TAGGER?: string;
+  LANG_TAGGER_MODEL?: string;
+  ASSEMBLYAI_MODEL?: string;
+  ASSEMBLYAI_POLL_MS?: string;
+  GEMINI_ROUTE?: string;
+  GEMINI_MODEL?: string;
+  GROK_ROUTE?: string;
+  GROK_MODEL?: string;
+  ELEVENLABS_MODEL?: string;
+  ASSEMBLYAI_API_KEY?: string;
+  GOOGLE_API_KEY?: string;
+  XAI_API_KEY?: string;
+  ELEVENLABS_API_KEY?: string;
   DEEPGRAM_MODEL?: string;
   TRANSLATE_MODEL?: string;
   DEEPGRAM_API_KEY?: string;

@@ -5,6 +5,7 @@ type Row = {
   filename: string;
   duration_sec: number;
   engine: string;
+  lang_tags: string | null;
   created_at: number;
   segments_json: string | null;
   translation_json: string | null;
@@ -13,7 +14,7 @@ type Row = {
 
 export async function loadTranscript(db: D1Database, userId: string, id: string): Promise<(Transcript & { status: string }) | null> {
   const r = await db
-    .prepare(`SELECT id, filename, duration_sec, engine, created_at, segments_json, translation_json, status FROM transcripts WHERE id = ? AND user_id = ?`)
+    .prepare(`SELECT id, filename, duration_sec, engine, lang_tags, created_at, segments_json, translation_json, status FROM transcripts WHERE id = ? AND user_id = ?`)
     .bind(id, userId)
     .first<Row>();
   if (!r) return null;
@@ -22,6 +23,7 @@ export async function loadTranscript(db: D1Database, userId: string, id: string)
     filename: r.filename,
     durationSec: r.duration_sec,
     engine: r.engine,
+    langTags: r.lang_tags,
     createdAt: r.created_at,
     status: r.status,
     segments: r.segments_json ? (JSON.parse(r.segments_json) as Segment[]) : [],

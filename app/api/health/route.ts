@@ -1,5 +1,6 @@
 import { getEnv } from "@/lib/cf";
 import { readConfig } from "@/lib/config";
+import { defaultEngineId, listEngines } from "@/lib/engines/registry";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,8 @@ export async function GET() {
   return Response.json(
     {
       ok: db,
-      stt: { provider: c.sttProvider, model: c.deepgramModel, configured: Boolean(env.DEEPGRAM_API_KEY) },
+      // Engine list with capabilities and missing key names: GET /api/admin/engines (ADMIN_EMAILS only).
+      stt: { engine: defaultEngineId(env), configured: listEngines(env).some((e) => e.isDefault && e.enabled), langTagger: c.langTagger },
       translate: { provider: "openrouter", model: c.translateModel, configured: Boolean(env.OPENROUTER_API_KEY) },
       login: c.googleConfigured ? "google" : "google-not-configured",
       privateTest: c.allowlist !== null,

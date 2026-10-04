@@ -17,6 +17,6 @@ test("config defaults are conservative", () => {
   assert.equal(c.signupFreeMinutes, 0);
   assert.equal(c.maxFileBytes, 50 * 1024 * 1024);
   assert.equal(c.maxDurationSec, 3600);
-  assert.equal(c.sttCostPerMinUsd, 0.0052);
+  assert.equal(c.langTagger, "llm");
   assert.equal(c.isPreview, false);
 });

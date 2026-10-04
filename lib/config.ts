@@ -14,6 +14,11 @@ export function parseAllowlist(raw: string | undefined): string[] | null {
     .filter(Boolean);
 }
 
+function parseTagger(raw: string | undefined): "llm" | "heuristic" | "off" {
+  const v = (raw ?? "").trim().toLowerCase();
+  return v === "heuristic" || v === "off" ? v : "llm";
+}
+
 export type RuntimeConfig = ReturnType<typeof readConfig>;
 
 export function readConfig(env: Partial<AppEnv>) {
@@ -22,7 +27,6 @@ export function readConfig(env: Partial<AppEnv>) {
     signupFreeMinutes: num(env.SIGNUP_FREE_MINUTES, 0),
     maxFileBytes: Math.round(num(env.MAX_FILE_MB, 50) * 1024 * 1024),
     maxDurationSec: Math.round(num(env.MAX_DURATION_MIN, 60) * 60),
-    sttCostPerMinUsd: num(env.STT_COST_PER_MIN_USD, 0.0052),
     translateEstimateUsd: num(env.TRANSLATE_ESTIMATE_USD, 0.1),
     userDailyLimitUsd: num(env.USER_DAILY_SPEND_LIMIT_USD, 1),
     dailyLimitUsd: num(env.DAILY_SPEND_LIMIT_USD, 3),
@@ -31,8 +35,8 @@ export function readConfig(env: Partial<AppEnv>) {
     alertFrom: (env.ALERT_EMAIL_FROM ?? "").trim(),
     turnstileSiteKey: (env.TURNSTILE_SITE_KEY ?? "").trim(),
     turnstileSecret: (env.TURNSTILE_SECRET_KEY ?? "").trim(),
-    sttProvider: (env.STT_PROVIDER ?? "deepgram").trim() || "deepgram",
-    deepgramModel: (env.DEEPGRAM_MODEL ?? "nova-3").trim() || "nova-3",
+    langTagger: parseTagger(env.LANG_TAGGER),
+    langTaggerModel: (env.LANG_TAGGER_MODEL ?? "").trim() || "google/gemini-3.5-flash-lite",
     translateModel: (env.TRANSLATE_MODEL ?? "google/gemini-3.8-flash").trim() || "google/gemini-3.8-flash",
     isPreview: (env.DEPLOY_CHANNEL ?? "").trim() === "preview",
     googleConfigured: Boolean((env.AUTH_GOOGLE_ID ?? "").trim() && (env.AUTH_GOOGLE_SECRET ?? "").trim()),

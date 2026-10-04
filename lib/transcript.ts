@@ -9,6 +9,8 @@ export type Transcript = {
   filename: string;
   durationSec: number;
   engine: string;
+  /** Where per-word language came from: "word" (engine), "span-prompted" (LLM transcriber), "fallback:llm|heuristic|…". */
+  langTags?: string | null;
   createdAt: number;
   segments: Segment[];
   /** English reference lines, one per segment, only after the user asks for it. */
@@ -33,7 +35,7 @@ export type DeepgramResponse = {
 };
 
 /** Segment language: en / es, or "mixed" when the minority language is at least 20% of en+es words. */
-function dominant(words: Word[]): SegmentLang {
+export function dominant(words: Word[]): SegmentLang {
   const counts: Record<Lang, number> = { en: 0, es: 0, other: 0 };
   for (const w of words) counts[w.lang] += 1;
   const total = counts.en + counts.es;
@@ -138,6 +140,7 @@ export function toJson(t: Transcript): string {
       file: t.filename,
       duration_sec: t.durationSec,
       engine: t.engine,
+      ...(t.langTags ? { lang_tags: t.langTags } : {}),
       segments: t.segments.map((s, i) => ({
         speaker: speakerLabel(s.speaker),
         start: Number(s.start.toFixed(2)),

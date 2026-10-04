@@ -1,1 +1,8 @@
 NEXTJS_ENV=development
+# Keys (names only here; set real values locally / with `wrangler secret put`)
+# DEEPGRAM_API_KEY=
+# ASSEMBLYAI_API_KEY=
+# OPENROUTER_API_KEY=
+# GOOGLE_API_KEY=
+# XAI_API_KEY=
+# ELEVENLABS_API_KEY=

@@ -40,6 +40,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/transcripts/[id
     userId,
     email: await userEmail(env.DB, userId),
     kind: "translate",
+    engine: "translate",
     provider: "openrouter",
     model: c.translateModel,
     ref: id,
@@ -51,7 +52,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/transcripts/[id
     status: result.ok ? "ok" : "failed",
     httpStatus: result.httpStatus,
     actualUsd: result.costUsd,
-    costSource: "openrouter_usage_cost",
+    costSource: "provider_returned",
   });
   if (!result.ok) {
     console.error("[translate] failed", result.httpStatus, result.error);

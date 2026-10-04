@@ -5,8 +5,8 @@ import { checkHuman } from "@/lib/human-check";
 import { detectDuration, MIME_BY_FORMAT } from "@/lib/duration";
 import { balanceSeconds, billableSeconds, chargeSeconds, ensureSignupGrant, refundSeconds } from "@/lib/minutes";
 import { BUSY_MESSAGE, USER_LIMIT_MESSAGE, checkAdmission, recordSubmission, settle } from "@/lib/spend";
-import { transcribeDeepgram } from "@/lib/providers";
-import { segmentsFromDeepgram } from "@/lib/transcript";
+import { chooseEngine } from "@/lib/engines/registry";
+import { tagEstimateUsd, tagLanguages } from "@/lib/langtag";
 import { userEmail } from "@/lib/users";
 import { fail, json, sessionUserId } from "@/lib/http";
 
@@ -15,9 +15,10 @@ export const dynamic = "force-dynamic";
 const TRANSCRIPT_TTL_SECONDS = 30 * 24 * 3600;
 
 /**
- * Upload → Deepgram Nova-3 (language=multi) → transcript that keeps both languages.
+ * Upload → configured engine (default Deepgram Nova-3 multi; see lib/engines) → transcript that keeps
+ * both languages; engines without per-word language get the fallback switch detector (lib/langtag.ts).
  * Gate order: sign-in (401) → allowlist (403) → Turnstile (403) → size/format/duration (413/415)
- * → minutes (402) → USD breakers (503 global / 429 per-user) → paid call.
+ * → engine choice (admin-only override, 403/503) → minutes (402) → USD breakers (503 / 429) → paid call(s).
  * Audio is never stored; it is streamed to the STT provider and dropped.
  */
 export async function POST(req: Request) {
@@ -57,6 +58,14 @@ export async function POST(req: Request) {
     return withCookie({ ok: false, code: "too_long", error: `Recordings up to ${Math.round(c.maxDurationSec / 60)} minutes for now.` }, 413);
   }
 
+  const email = await userEmail(env.DB, userId);
+  const choice = chooseEngine(env, email, req.headers.get("x-sq-engine"));
+  if (!choice.ok) return withCookie({ ok: false, code: choice.code, error: choice.error }, choice.status);
+  const engine = choice.engine;
+  if (engine.maxBytes && file.size > engine.maxBytes) {
+    return withCookie({ ok: false, code: "too_large", error: `Files up to ${Math.round(engine.maxBytes / 1024 / 1024)} MB for now.` }, 413);
+  }
+
   await ensureSignupGrant(env, userId);
   const seconds = billableSeconds(detected.seconds);
   const left = await balanceSeconds(env.DB, userId);
@@ -64,54 +73,72 @@ export async function POST(req: Request) {
     return withCookie({ ok: false, code: "no_minutes", error: "Not enough free minutes left on this account for this file.", secondsLeft: Math.max(0, left) }, 402);
   }
 
-  const estimateUsd = (seconds / 60) * c.sttCostPerMinUsd;
-  const admission = await checkAdmission(env, userId, estimateUsd);
+  const needsTagger = engine.caps.languageTags === "none" && c.langTagger === "llm" && Boolean(env.OPENROUTER_API_KEY);
+  const sttEstimateUsd = (seconds / 60) * engine.listUsdPerMin(env);
+  const tagEstimate = needsTagger ? tagEstimateUsd(seconds) : 0;
+  const admission = await checkAdmission(env, userId, sttEstimateUsd + tagEstimate);
   if (!admission.ok) {
     return admission.scope === "global"
       ? withCookie({ ok: false, code: "paused", error: BUSY_MESSAGE }, 503)
       : withCookie({ ok: false, code: "user_limit", error: USER_LIMIT_MESSAGE }, 429);
   }
-  if (!env.DEEPGRAM_API_KEY) return withCookie({ ok: false, code: "unavailable", error: "Transcription isn't configured yet." }, 503);
 
   const id = generateId();
   const filename = (file.name || "audio").slice(0, 200);
   const now = nowSeconds();
+  const model = engine.model(env);
   await env.DB
     .prepare(
       `INSERT INTO transcripts (id, user_id, status, filename, mime, bytes, duration_sec, engine, created_at, expires_at)
        VALUES (?, ?, 'processing', ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, userId, filename, file.type || MIME_BY_FORMAT[detected.format], file.size, detected.seconds, `deepgram/${c.deepgramModel}`, now, now + TRANSCRIPT_TTL_SECONDS)
+    .bind(id, userId, filename, file.type || MIME_BY_FORMAT[detected.format], file.size, detected.seconds, `${engine.id}/${model}`, now, now + TRANSCRIPT_TTL_SECONDS)
     .run();
   await chargeSeconds(env.DB, userId, seconds, id);
-  const eventId = await recordSubmission(env, {
+  const sttEvent = await recordSubmission(env, {
     userId,
-    email: await userEmail(env.DB, userId),
+    email,
     kind: "stt",
-    provider: "deepgram",
-    model: `${c.deepgramModel}/multi`,
+    engine: engine.id,
+    provider: `${engine.id}:${engine.route(env)}`,
+    model,
     ref: id,
     audioSeconds: detected.seconds,
-    estimateUsd,
+    estimateUsd: sttEstimateUsd,
   });
 
-  const result = await transcribeDeepgram(env.DEEPGRAM_API_KEY, c.deepgramModel, audio, MIME_BY_FORMAT[detected.format]);
+  const referer = new URL(req.url).origin;
+  const result = await engine.transcribe({ audio, mime: MIME_BY_FORMAT[detected.format], format: detected.format, detectedSec: detected.seconds, env, referer });
   if (!result.ok) {
-    await settle(env, eventId, { status: "failed", httpStatus: result.httpStatus, actualUsd: null, costSource: "estimate" });
+    await settle(env, sttEvent, { status: "failed", httpStatus: result.httpStatus, actualUsd: result.cost?.usd ?? null, costSource: result.cost?.source ?? "estimate" });
     await refundSeconds(env.DB, userId, seconds, id);
     await env.DB.prepare(`UPDATE transcripts SET status = 'failed', error = ? WHERE id = ?`).bind(result.error.slice(0, 300), id).run();
-    console.error("[transcribe] provider failed", result.httpStatus, result.error);
+    console.error("[transcribe] engine failed", engine.id, result.httpStatus, result.error);
     return withCookie({ ok: false, code: "provider_failed", error: "Transcription failed. Your minutes were not used." }, 502);
   }
-  const actualSec = result.durationSec ?? detected.seconds;
-  await settle(env, eventId, {
-    status: "ok",
-    httpStatus: result.httpStatus,
-    actualUsd: (actualSec / 60) * c.sttCostPerMinUsd,
-    costSource: "list_price_x_provider_duration",
-    audioSeconds: actualSec,
-  });
-  const segments = segmentsFromDeepgram(result.body);
-  await env.DB.prepare(`UPDATE transcripts SET status = 'done', segments_json = ? WHERE id = ?`).bind(JSON.stringify(segments), id).run();
-  return withCookie({ ok: true, id }, 200);
+  await settle(env, sttEvent, { status: "ok", httpStatus: result.httpStatus, actualUsd: result.cost.usd, costSource: result.cost.source, audioSeconds: result.durationSec, model: result.model });
+
+  let segments = result.segments;
+  let langTags: string = result.languageTags;
+  if (result.languageTags === "none") {
+    // Fallback switch detector so highlights work on engines without per-word language.
+    const tagEvent = needsTagger
+      ? await recordSubmission(env, { userId, email, kind: "tag", engine: "langtag", provider: "openrouter", model: c.langTaggerModel, ref: id, audioSeconds: result.durationSec, estimateUsd: tagEstimate })
+      : null;
+    const tagged = await tagLanguages(segments, { mode: needsTagger ? "llm" : c.langTagger === "off" ? "off" : "heuristic", apiKey: env.OPENROUTER_API_KEY, model: c.langTaggerModel, referer });
+    if (tagEvent) {
+      await settle(env, tagEvent, {
+        status: tagged.method === "heuristic" ? "failed" : "ok",
+        httpStatus: tagged.httpStatus,
+        // No cost reported (call never reached the model) → nothing was charged.
+        actualUsd: tagged.cost?.usd ?? (tagged.httpStatus && tagged.httpStatus < 300 ? null : 0),
+        costSource: tagged.cost?.source ?? "estimate",
+      });
+    }
+    if (tagged.error) console.error("[transcribe] tagger", tagged.error);
+    segments = tagged.segments;
+    langTags = `fallback:${tagged.method}`;
+  }
+  await env.DB.prepare(`UPDATE transcripts SET status = 'done', segments_json = ?, lang_tags = ? WHERE id = ?`).bind(JSON.stringify(segments), langTags, id).run();
+  return withCookie({ ok: true, id, ...(choice.overridden ? { engine: engine.id, langTags } : {}) }, 200);
 }

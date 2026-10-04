@@ -37,8 +37,6 @@ TRANSCRIBE_ALLOWLIST = "xiangqiling5204@gmail.com"
 SIGNUP_FREE_MINUTES = "15"
 MAX_FILE_MB = "50"
 MAX_DURATION_MIN = "60"
-# Deepgram Nova-3 Multilingual pre-recorded, pay-as-you-go list price (deepgram.com/pricing, 2026-10-05).
-STT_COST_PER_MIN_USD = "0.0052"
 # USD breakers per UTC day (STT + translation). Visitors never see these numbers.
 USER_DAILY_SPEND_LIMIT_USD = "1"
 DAILY_SPEND_LIMIT_USD = "3"
@@ -48,7 +46,24 @@ ALERT_EMAIL_TO = "support@crayonink.com"
 ALERT_EMAIL_FROM = "alerts@crayonink.com"
 # Turnstile widget "switchquote" (managed) for switchquote / preview-switchquote .potter-faa.workers.dev.
 TURNSTILE_SITE_KEY = "0x4AAAAAAFNr2HeBiRCdfzdY"
-STT_PROVIDER = "deepgram"
+# Transcription engine (lib/engines/registry.ts): deepgram | assemblyai | gemini | grok | elevenlabs.
+# List prices live in each adapter. Users never choose; ADMIN_EMAILS may override per request (x-sq-engine).
+STT_ENGINE = "deepgram"
+ADMIN_EMAILS = "xiangqiling5204@gmail.com"
+# Comma-separated engine ids to switch off even when their key is present.
+ENGINES_DISABLED = ""
 DEEPGRAM_MODEL = "nova-3"
+ASSEMBLYAI_MODEL = "universal-3-5-pro"
+# gemini: "openrouter" (paid, no training) or "google" (GOOGLE_API_KEY; free tier trains on content).
+GEMINI_ROUTE = "openrouter"
+GEMINI_MODEL = "gemini-3.8-flash"
+# grok: "xai" (direct, diarization + word times; needs XAI_API_KEY — missing, so disabled) or "openrouter" (text only).
+GROK_ROUTE = "xai"
+GROK_MODEL = "grok-voice-transcribe-2.0"
+# elevenlabs: needs ELEVENLABS_API_KEY (missing, so disabled).
+ELEVENLABS_MODEL = "scribe_v2"
+# Fallback switch detector for engines without per-word language: llm | heuristic | off.
+LANG_TAGGER = "llm"
+LANG_TAGGER_MODEL = "google/gemini-3.5-flash-lite"
 TRANSLATE_MODEL = "google/gemini-3.8-flash"
 DEPLOY_CHANNEL = ""

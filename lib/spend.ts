@@ -94,7 +94,9 @@ async function maybeAlert(env: AppEnv, key: string, day: string, scope: "global"
 export type PaidCall = {
   userId: string;
   email: string | null;
-  kind: "stt" | "translate";
+  kind: "stt" | "translate" | "tag";
+  /** Engine id from lib/engines/registry.ts for STT; "translate" / "langtag" for the text passes. */
+  engine: string;
   provider: string;
   model: string;
   ref: string;
@@ -110,10 +112,10 @@ export async function recordSubmission(env: AppEnv, call: PaidCall, now = nowSec
   const micro = toMicro(call.estimateUsd);
   await env.DB
     .prepare(
-      `INSERT INTO spend_events (id, day, user_id, user_email, kind, provider, model, ref, audio_seconds, micro_usd, cost_source, namespace, status, http_status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'estimate', ?, 'submitted', NULL, ?)`
+      `INSERT INTO spend_events (id, day, user_id, user_email, kind, engine, provider, model, ref, audio_seconds, micro_usd, cost_source, namespace, status, http_status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'estimate', ?, 'submitted', NULL, ?)`
     )
-    .bind(id, day, call.userId, call.email, call.kind, call.provider, call.model, call.ref, call.audioSeconds, micro, c.spendNamespace, now)
+    .bind(id, day, call.userId, call.email, call.kind, call.engine, call.provider, call.model, call.ref, call.audioSeconds, micro, c.spendNamespace, now)
     .run();
   await addLedger(env.DB, globalKey(c.spendNamespace), day, micro, 1, now);
   await addLedger(env.DB, userKey(c.spendNamespace, call.userId), day, micro, 1, now);
@@ -124,7 +126,7 @@ export async function recordSubmission(env: AppEnv, call: PaidCall, now = nowSec
 export async function settle(
   env: AppEnv,
   eventId: string,
-  result: { status: "ok" | "failed"; httpStatus: number | null; actualUsd: number | null; costSource: string; audioSeconds?: number | null },
+  result: { status: "ok" | "failed"; httpStatus: number | null; actualUsd: number | null; costSource: string; audioSeconds?: number | null; model?: string | null },
   now = nowSeconds()
 ) {
   const c = readConfig(env);
@@ -133,8 +135,8 @@ export async function settle(
   const micro = result.actualUsd === null ? Number(ev.micro_usd) : toMicro(result.actualUsd);
   const delta = micro - Number(ev.micro_usd);
   await env.DB
-    .prepare(`UPDATE spend_events SET status = ?, http_status = ?, micro_usd = ?, cost_source = ?, audio_seconds = COALESCE(?, audio_seconds) WHERE id = ?`)
-    .bind(result.status, result.httpStatus, micro, result.actualUsd === null ? "estimate" : result.costSource, result.audioSeconds ?? null, eventId)
+    .prepare(`UPDATE spend_events SET status = ?, http_status = ?, micro_usd = ?, cost_source = ?, audio_seconds = COALESCE(?, audio_seconds), model = COALESCE(?, model) WHERE id = ?`)
+    .bind(result.status, result.httpStatus, micro, result.actualUsd === null ? "estimate" : result.costSource, result.audioSeconds ?? null, result.model ?? null, eventId)
     .run();
   if (delta !== 0) {
     await addLedger(env.DB, globalKey(c.spendNamespace), ev.day, delta, 0, now);

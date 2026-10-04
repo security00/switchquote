@@ -1,37 +1,6 @@
-import type { DeepgramResponse, Segment } from "./transcript";
+import type { Segment } from "./transcript";
 import { segmentText } from "./transcript";
 
-export type SttResult =
-  | { ok: true; httpStatus: number; durationSec: number | null; requestId: string | null; body: DeepgramResponse }
-  | { ok: false; httpStatus: number | null; error: string };
-
-/** Deepgram pre-recorded: Nova-3 multilingual with per-word language, diarization and utterances. */
-export async function transcribeDeepgram(apiKey: string, model: string, audio: ArrayBuffer, contentType: string): Promise<SttResult> {
-  const params = new URLSearchParams({
-    model,
-    language: "multi",
-    diarize: "true",
-    smart_format: "true",
-    punctuate: "true",
-    utterances: "true",
-  });
-  try {
-    const res = await fetch(`https://api.deepgram.com/v1/listen?${params}`, {
-      method: "POST",
-      headers: { Authorization: `Token ${apiKey}`, "Content-Type": contentType },
-      body: audio,
-    });
-    if (!res.ok) {
-      const text = (await res.text().catch(() => "")).slice(0, 300);
-      return { ok: false, httpStatus: res.status, error: `Deepgram ${res.status}: ${text}` };
-    }
-    const body = (await res.json()) as DeepgramResponse;
-    const d = Number(body.metadata?.duration);
-    return { ok: true, httpStatus: res.status, durationSec: Number.isFinite(d) && d > 0 ? d : null, requestId: body.metadata?.request_id ?? null, body };
-  } catch (e) {
-    return { ok: false, httpStatus: null, error: e instanceof Error ? e.message : String(e) };
-  }
-}
 
 export const MAX_TRANSLATE_WORDS = 20_000;
 export const translateEstimateUsd = (words: number) => Math.max(0.001, words * 1e-5);

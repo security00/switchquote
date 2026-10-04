@@ -2,6 +2,8 @@ name = "switchquote"
 main = ".open-next/worker.js"
 compatibility_date = "2025-01-15"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+account_id = "faae494a756090f5f9c0ad7b8d1ddb88"
+workers_dev = true
 
 [assets]
 directory = ".open-next/assets"

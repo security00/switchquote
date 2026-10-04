@@ -71,6 +71,10 @@ async function maybeAlert(env: AppEnv, key: string, day: string, scope: "global"
       .bind(ts, key, day)
       .run();
     if (claimed.meta.changes !== 1) continue;
+    if (l.column === "alert100_at") {
+      // 100% supersedes 80%: never send a late 80% mail after the 100% one.
+      await env.DB.prepare(`UPDATE spend_ledger SET alert80_at = ? WHERE ledger_key = ? AND day = ? AND alert80_at IS NULL`).bind(ts, key, day).run();
+    }
     const who = scope === "global" ? "global" : `per-user (${key})`;
     const subject = `[SwitchQuote] ${who} spend breaker ${l.level} — ${day}`;
     const text = [

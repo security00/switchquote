@@ -3,26 +3,36 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy",
-  description: "Minimal privacy notice for SwitchQuote Phase A waitlist.",
+  description: "How SwitchQuote handles waitlist signups, Google sign-in, interview audio and transcripts.",
 };
+
+const P = ({ children }: { children: React.ReactNode }) => <p className="mt-4 text-slate-600 leading-relaxed">{children}</p>;
 
 export default function PrivacyPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 prose prose-slate max-w-none">
+    <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
       <h1 className="text-3xl font-semibold text-slate-900">Privacy</h1>
-      <p className="mt-4 text-slate-600 leading-relaxed">
-        Phase A collects waitlist signups only: email, role, whether you run
-        bilingual interviews, and a timestamp. We use this to prioritize access
-        for journalists and to contact you about {site.name}.
-      </p>
-      <p className="mt-4 text-slate-600 leading-relaxed">
-        We do not sell waitlist data. Upload and audio processing are not live
-        yet; this policy will expand before those features ship.
-      </p>
-      <p className="mt-4 text-slate-600 leading-relaxed">
-        Questions: contact via the email you receive after signup (coming with
-        launch comms).
-      </p>
+      <h2 className="mt-8 text-lg font-semibold text-slate-900">What we collect</h2>
+      <P>
+        Waitlist: email, role, whether you run bilingual interviews, and a timestamp. Sign-in: your Google
+        account email, name and profile picture. Transcription: the transcripts you create, the file name and
+        length, and usage records needed to run free minutes and abuse limits.
+      </P>
+      <h2 className="mt-8 text-lg font-semibold text-slate-900">Your audio</h2>
+      <P>
+        We process interview media only to produce the transcript you asked for. Audio is sent to our speech-to-text
+        provider and is not stored by {site.name}. Transcripts are kept for 30 days, or until you click Delete.
+      </P>
+      <P>
+        We don&apos;t use your audio or transcripts to train models. You are responsible for recording consent and
+        source protection.
+      </P>
+      <h2 className="mt-8 text-lg font-semibold text-slate-900">Who processes it</h2>
+      <P>
+        Cloudflare (hosting, database, bot protection), Deepgram (speech-to-text), and — only when you click
+        Translate to English — OpenRouter, which routes the request to Google Gemini. Google handles sign-in.
+      </P>
+      <P>We do not sell your data.</P>
     </div>
   );
 }

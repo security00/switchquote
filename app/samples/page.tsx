@@ -42,8 +42,8 @@ export default function SamplesPage() {
       </h1>
       <p className="mt-4 max-w-2xl text-slate-600 leading-relaxed">
         These panels are fictional examples showing what journalists often fight
-        after generic transcription—not output from SwitchQuote production yet.
-        Real uploads arrive after Phase A.
+        after generic transcription—not SwitchQuote output. Real uploads are in a
+        private test now.
       </p>
 
       <div className="mt-12 grid gap-8 lg:grid-cols-2">

@@ -18,7 +18,9 @@
     "@opennextjs/cloudflare": "^1.20.6",
     "next": "16.3.8",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "next-auth": "5.0.0-beta.32",
+    "fflate": "^0.8.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

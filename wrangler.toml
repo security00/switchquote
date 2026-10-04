@@ -21,3 +21,34 @@ migrations_dir = "migrations"
 
 [images]
 binding = "IMAGES"
+
+# Operator alert emails via Cloudflare Email Sending. crayonink.com is the onboarded sending
+# domain on this account; workers.dev can't be onboarded, so alerts reuse that sender.
+[[send_email]]
+name = "EMAIL"
+allowed_sender_addresses = ["alerts@crayonink.com"]
+
+# Non-secret configuration. Secrets (DEEPGRAM_API_KEY, OPENROUTER_API_KEY, TURNSTILE_SECRET_KEY,
+# AUTH_SECRET, AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET) are set with `wrangler secret put` — never here.
+[vars]
+# Debug phase: only these Google accounts may run paid inference. Empty or "*" = every signed-in account.
+TRANSCRIBE_ALLOWLIST = "xiangqiling5204@gmail.com"
+# One-time free minutes for a new allowed account (lifetime). Placeholder from the PRD draft (15); 掌柜 decides.
+SIGNUP_FREE_MINUTES = "15"
+MAX_FILE_MB = "50"
+MAX_DURATION_MIN = "60"
+# Deepgram Nova-3 Multilingual pre-recorded, pay-as-you-go list price (deepgram.com/pricing, 2026-10-05).
+STT_COST_PER_MIN_USD = "0.0052"
+# USD breakers per UTC day (STT + translation). Visitors never see these numbers.
+USER_DAILY_SPEND_LIMIT_USD = "1"
+DAILY_SPEND_LIMIT_USD = "3"
+# Leave empty in production; preview versions set "preview" so they never trip the live breaker.
+SPEND_NAMESPACE = ""
+ALERT_EMAIL_TO = "support@crayonink.com"
+ALERT_EMAIL_FROM = "alerts@crayonink.com"
+# Turnstile widget "switchquote" (managed) for switchquote / preview-switchquote .potter-faa.workers.dev.
+TURNSTILE_SITE_KEY = "0x4AAAAAAFNr2HeBiRCdfzdY"
+STT_PROVIDER = "deepgram"
+DEEPGRAM_MODEL = "nova-3"
+TRANSLATE_MODEL = "google/gemini-3.8-flash"
+DEPLOY_CHANNEL = ""

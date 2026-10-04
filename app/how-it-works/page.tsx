@@ -56,7 +56,7 @@ export default function HowItWorksPage() {
         <p className="font-medium text-slate-900">{site.phrases.notMeetingNotes}</p>
         <p className="mt-2 text-sm text-slate-600">
           No auto-translate to English-only. No “summary of key decisions.”
-          Phase A is waitlist + samples; upload comes next.
+          Transcription is in a private test; everyone else can join the waitlist.
         </p>
       </div>
 

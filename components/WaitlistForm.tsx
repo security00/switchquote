@@ -53,8 +53,8 @@ export function WaitlistForm({ id }: { id?: string }) {
     >
       <h2 className="text-xl font-semibold text-slate-900">Join the waitlist</h2>
       <p className="mt-2 text-sm text-slate-600">
-        Phase A: no uploads yet. Tell us who you are so we can prioritize
-        journalists on the Spanish beat.
+        Uploads are invite-only while we test. Tell us who you are so we can
+        prioritize journalists on the Spanish beat.
       </p>
 
       <div className="mt-6 space-y-4">

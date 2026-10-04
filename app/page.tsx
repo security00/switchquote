@@ -64,11 +64,12 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
         <h2 className="text-2xl font-semibold text-slate-900">
-          Phase A: prove the transcript quality
+          Private test: prove the transcript quality
         </h2>
         <p className="mt-3 max-w-2xl text-slate-600">
-          No upload pipeline or checkout yet. Join the waitlist, read the
-          samples, and tell us if you run bilingual interviews weekly.
+          Uploads are invite-only while we test, and there is no checkout. Join
+          the waitlist, read the samples, and tell us if you run bilingual
+          interviews weekly.
         </p>
         <ul className="mt-8 grid gap-4 sm:grid-cols-3">
           {[

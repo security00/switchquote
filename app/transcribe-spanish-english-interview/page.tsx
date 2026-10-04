@@ -11,28 +11,28 @@ export const metadata: Metadata = {
 export default function TranscribeSpanishEnglishPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
-      <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">
+      <h1 className="text-3xl text-ink sm:text-[44px] leading-tight">
         Transcribe a Spanish–English interview
       </h1>
-      <p className="mt-4 text-lg text-slate-600 leading-relaxed">
+      <p className="mt-4 text-lg text-ink-soft leading-relaxed">
         Bilingual interviews are not “Spanish audio with an English summary.”
         Reporters need both languages represented so editors and lawyers see the
         same words the source said.
       </p>
 
-      <h2 className="mt-10 text-xl font-semibold text-slate-900">
+      <h2 className="mt-10 text-xl font-semibold text-ink">
         Common failure modes
       </h2>
-      <ul className="mt-4 list-disc space-y-3 pl-5 text-slate-700 leading-relaxed">
+      <ul className="mt-4 list-disc space-y-3 pl-5 text-ink leading-relaxed">
         <li>Forced English translation drops legally or emotionally loaded Spanish phrasing.</li>
         <li>Single-language ASR garbles mid-sentence switches.</li>
         <li>Meeting tools merge speakers and erase overlap you need for context.</li>
       </ul>
 
-      <h2 className="mt-10 text-xl font-semibold text-slate-900">
+      <h2 className="mt-10 text-xl font-semibold text-ink">
         A better bar for publish-ready notes
       </h2>
-      <p className="mt-3 text-slate-700 leading-relaxed">
+      <p className="mt-3 text-ink leading-relaxed">
         Start from transcription, not translation. Mark speakers. Keep code
         switches intact. Export something you can quote-check before deadline.
         That is the workflow {site.name} is building. Transcription is in a
@@ -41,14 +41,14 @@ export default function TranscribeSpanishEnglishPage() {
 
       <Link
         href="/samples"
-        className="mt-6 inline-flex font-medium text-teal-800 hover:text-teal-900"
+        className="mt-6 inline-flex font-medium text-accent hover:text-accent-strong"
       >
         View sample panels →
       </Link>
       <br />
       <Link
         href="/#waitlist"
-        className="mt-4 inline-flex font-medium text-teal-800 hover:text-teal-900"
+        className="mt-4 inline-flex font-medium text-accent hover:text-accent-strong"
       >
         Join the waitlist →
       </Link>

@@ -33,14 +33,14 @@ const spanglishAfter = [
 
 export default function SamplesPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6">
-      <p className="text-sm font-semibold uppercase tracking-wider text-amber-800">
+    <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+      <p className="text-sm font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-es">
         Sample — illustrative only
       </p>
-      <h1 className="mt-3 text-3xl font-semibold text-slate-900 sm:text-4xl">
+      <h1 className="mt-3 text-3xl text-ink sm:text-[44px] leading-tight">
         Before / after: interview vs meeting-bot output
       </h1>
-      <p className="mt-4 max-w-2xl text-slate-600 leading-relaxed">
+      <p className="mt-4 max-w-2xl text-ink-soft leading-relaxed">
         These panels are fictional examples showing what journalists often fight
         after generic transcription—not SwitchQuote output. Real uploads are in a
         private test now.
@@ -76,12 +76,12 @@ export default function SamplesPage() {
         />
       </div>
 
-      <p className="mt-10 text-sm text-slate-500">
+      <p className="mt-10 text-sm text-ink-faint">
         {site.phrases.transcribe} · {site.phrases.quoteReady}
       </p>
       <Link
         href="/#waitlist"
-        className="mt-4 inline-flex font-medium text-teal-800 hover:text-teal-900"
+        className="mt-4 inline-flex font-medium text-accent hover:text-accent-strong"
       >
         Join the waitlist →
       </Link>

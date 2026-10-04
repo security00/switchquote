@@ -11,18 +11,18 @@ export const metadata: Metadata = {
 export default function HowItWorksPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
-      <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">
+      <h1 className="text-3xl text-ink sm:text-[44px] leading-tight">
         Transcribe ≠ translate
       </h1>
-      <p className="mt-4 text-lg text-slate-600 leading-relaxed">
+      <p className="mt-4 text-lg text-ink-soft leading-relaxed">
         Translation picks a target language and rewrites meaning. Transcription
         preserves what was said—in each language—so you can attribute quotes
         accurately.
       </p>
 
-      <div className="mt-10 space-y-8 text-slate-700 leading-relaxed">
+      <div className="mt-10 space-y-8 text-ink leading-relaxed">
         <section>
-          <h2 className="text-xl font-semibold text-slate-900">
+          <h2 className="text-2xl text-ink">
             1. Record the interview
           </h2>
           <p className="mt-2">
@@ -31,7 +31,7 @@ export default function HowItWorksPage() {
           </p>
         </section>
         <section>
-          <h2 className="text-xl font-semibold text-slate-900">
+          <h2 className="text-2xl text-ink">
             2. Speaker-aware bilingual pass
           </h2>
           <p className="mt-2">
@@ -41,7 +41,7 @@ export default function HowItWorksPage() {
           </p>
         </section>
         <section>
-          <h2 className="text-xl font-semibold text-slate-900">
+          <h2 className="text-2xl text-ink">
             3. Quote-ready export
           </h2>
           <p className="mt-2">
@@ -52,9 +52,9 @@ export default function HowItWorksPage() {
         </section>
       </div>
 
-      <div className="mt-12 rounded-xl border border-teal-200 bg-teal-50/50 p-6">
-        <p className="font-medium text-slate-900">{site.phrases.notMeetingNotes}</p>
-        <p className="mt-2 text-sm text-slate-600">
+      <div className="mt-12 rounded-xl border border-accent/30 bg-accent/50 p-6">
+        <p className="font-medium text-ink">{site.phrases.notMeetingNotes}</p>
+        <p className="mt-2 text-sm text-ink-soft">
           No auto-translate to English-only. No “summary of key decisions.”
           Transcription is in a private test; everyone else can join the waitlist.
         </p>
@@ -62,7 +62,7 @@ export default function HowItWorksPage() {
 
       <Link
         href="/#waitlist"
-        className="mt-8 inline-flex font-medium text-teal-800 hover:text-teal-900"
+        className="mt-8 inline-flex font-medium text-accent hover:text-accent-strong"
       >
         Join the waitlist →
       </Link>

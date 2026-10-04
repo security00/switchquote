@@ -8,15 +8,20 @@ export const metadata: Metadata = {
 
 export default function AppPage() {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-      <p className="text-sm font-semibold uppercase tracking-wider text-teal-800">Transcribe, don&apos;t translate</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">Upload your Spanish–English interview</h1>
-      <p className="mt-3 max-w-2xl text-slate-600">
-        You get the Spanish and the English exactly as spoken, with speakers, timecodes and every language switch highlighted. Translate to English is optional and shows up next to the original — it never replaces it.
-      </p>
-      <div className="mt-8">
-        <TranscribeApp />
-      </div>
+    <section className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-12">
+      <TranscribeApp
+        introTop={
+          <>
+            <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-es">Transcribe, don&apos;t translate</p>
+            <h1 className="mt-2 text-[32px] leading-[1.1] sm:mt-3 sm:text-[44px]">Upload your Spanish–English interview</h1>
+          </>
+        }
+        introBody={
+          <p className="max-w-xl text-[15px] leading-relaxed text-ink-soft sm:text-base lg:-mt-2">
+            You get the Spanish and the English exactly as spoken, with speakers, timecodes and every language switch highlighted. Translate to English is optional and shows up next to the original — it never replaces it.
+          </p>
+        }
+      />
     </section>
   );
 }

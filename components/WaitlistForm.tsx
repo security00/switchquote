@@ -49,34 +49,34 @@ export function WaitlistForm({ id }: { id?: string }) {
     <form
       id={id}
       onSubmit={onSubmit}
-      className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+      className="scroll-mt-20 rounded-xl border border-rule bg-surface p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.12)] sm:p-8"
     >
-      <h2 className="text-xl font-semibold text-slate-900">Join the waitlist</h2>
-      <p className="mt-2 text-sm text-slate-600">
+      <h2 className="text-2xl">Join the waitlist</h2>
+      <p className="mt-2 text-sm text-ink-soft">
         Uploads are invite-only while we test. Tell us who you are so we can
         prioritize journalists on the Spanish beat.
       </p>
 
       <div className="mt-6 space-y-4">
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">Work email</span>
+          <span className="text-sm font-medium text-ink">Work email</span>
           <input
             type="email"
             required
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 shadow-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20"
+            className="mt-1.5 w-full rounded-md border border-rule-strong bg-surface px-3 py-2.5 text-ink shadow-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             placeholder="you@newsroom.org"
           />
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">Role</span>
+          <span className="text-sm font-medium text-ink">Role</span>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as WaitlistRole)}
-            className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 shadow-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20"
+            className="mt-1.5 w-full rounded-md border border-rule-strong bg-surface px-3 py-2.5 text-ink shadow-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
           >
             <option value="journalist">Journalist</option>
             <option value="researcher">UX / research</option>
@@ -85,14 +85,14 @@ export function WaitlistForm({ id }: { id?: string }) {
         </label>
 
         <fieldset>
-          <legend className="text-sm font-medium text-slate-700">
+          <legend className="text-sm font-medium text-ink">
             Do you regularly record bilingual Spanish–English interviews?
           </legend>
           <div className="mt-2 flex gap-4">
             {(["yes", "no"] as const).map((value) => (
               <label
                 key={value}
-                className="flex cursor-pointer items-center gap-2 text-sm text-slate-700"
+                className="flex cursor-pointer items-center gap-2 text-sm text-ink"
               >
                 <input
                   type="radio"
@@ -100,7 +100,7 @@ export function WaitlistForm({ id }: { id?: string }) {
                   value={value}
                   checked={bilingual === value}
                   onChange={() => setBilingual(value)}
-                  className="text-teal-800 focus:ring-teal-700"
+                  className="accent-[var(--accent)]"
                 />
                 {value === "yes" ? "Yes" : "No"}
               </label>
@@ -112,7 +112,7 @@ export function WaitlistForm({ id }: { id?: string }) {
       <button
         type="submit"
         disabled={status === "loading"}
-        className="mt-6 w-full rounded-full bg-teal-800 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-900 disabled:opacity-60 transition-colors"
+        className="mt-6 w-full rounded-md bg-accent px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-strong disabled:opacity-60"
       >
         {status === "loading" ? "Submitting…" : "Request early access"}
       </button>
@@ -120,7 +120,7 @@ export function WaitlistForm({ id }: { id?: string }) {
       {message ? (
         <p
           role="status"
-          className={`mt-4 text-sm ${status === "success" ? "text-teal-800" : "text-red-700"}`}
+          className={`mt-4 text-sm ${status === "success" ? "text-accent" : "text-red-700"}`}
         >
           {message}
         </p>

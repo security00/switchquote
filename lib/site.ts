@@ -13,6 +13,7 @@ export const site = {
 } as const;
 
 export const navLinks = [
+  { href: "/app", label: "Try it" },
   { href: "/samples", label: "Samples" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-journalists", label: "For journalists" },

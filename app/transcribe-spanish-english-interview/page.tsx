@@ -35,8 +35,8 @@ export default function TranscribeSpanishEnglishPage() {
       <p className="mt-3 text-slate-700 leading-relaxed">
         Start from transcription, not translation. Mark speakers. Keep code
         switches intact. Export something you can quote-check before deadline.
-        That is the workflow {site.name} is building—starting with waitlist and
-        samples in Phase A.
+        That is the workflow {site.name} is building. Transcription is in a
+        private test now; join the waitlist to get access.
       </p>
 
       <Link

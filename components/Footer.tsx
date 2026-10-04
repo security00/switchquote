@@ -37,8 +37,8 @@ export function Footer() {
           </div>
         </div>
         <p className="mt-8 text-xs text-slate-400">
-          © {new Date().getFullYear()} {site.name}. Phase A — waitlist only; no
-          upload or billing yet.
+          © {new Date().getFullYear()} {site.name}. Private test — transcription is
+          invite-only for now; no billing yet.
         </p>
       </div>
     </footer>

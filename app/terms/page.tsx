@@ -3,27 +3,30 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Terms",
-  description: "Minimal terms for SwitchQuote Phase A marketing site.",
+  description: "Terms for the SwitchQuote private test.",
 };
+
+const P = ({ children }: { children: React.ReactNode }) => <p className="mt-4 text-slate-600 leading-relaxed">{children}</p>;
 
 export default function TermsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
       <h1 className="text-3xl font-semibold text-slate-900">Terms</h1>
-      <p className="mt-4 text-slate-600 leading-relaxed">
-        {site.name} Phase A is a marketing and waitlist site. Samples are
-        illustrative. There is no paid service, upload, or guaranteed availability
-        date yet.
-      </p>
-      <p className="mt-4 text-slate-600 leading-relaxed">
-        By joining the waitlist you confirm the email is yours and you agree to
-        receive product updates about {site.name}. You may request removal before
-        launch by replying to a waitlist message once email is enabled.
-      </p>
-      <p className="mt-4 text-slate-600 leading-relaxed">
-        The site is provided as-is during preview; full terms will ship with
-        billing and upload features.
-      </p>
+      <P>
+        {site.name} is in a private test. Transcription is invite-only, free, and provided as-is, without a
+        guaranteed availability date. There is no paid plan yet.
+      </P>
+      <P>
+        Transcripts are AI drafts — not certified legal or medical records. Verify every quote before you publish.
+        This is not legal advice and not a substitute for newsroom counsel.
+      </P>
+      <P>
+        By uploading you confirm you have the right to the recording and your interviewees&apos; consent. Don&apos;t
+        upload content you aren&apos;t allowed to share with our processors (see Privacy).
+      </P>
+      <P>
+        By joining the waitlist you confirm the email is yours and agree to receive product updates about {site.name}.
+      </P>
     </div>
   );
 }

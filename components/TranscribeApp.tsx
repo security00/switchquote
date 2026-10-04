@@ -126,6 +126,8 @@ export function TranscribeApp() {
       } else {
         await open(body.id || "");
         setFile(null);
+        const input = document.getElementById("audio") as HTMLInputElement | null;
+        if (input) input.value = "";
       }
     } finally {
       resetWidget();

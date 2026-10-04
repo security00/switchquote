@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   description: "Terms for the SwitchQuote private test.",
 };
 
-const P = ({ children }: { children: React.ReactNode }) => <p className="mt-4 text-slate-600 leading-relaxed">{children}</p>;
+const P = ({ children }: { children: React.ReactNode }) => <p className="mt-4 text-ink-soft leading-relaxed">{children}</p>;
 
 export default function TermsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
-      <h1 className="text-3xl font-semibold text-slate-900">Terms</h1>
+      <h1 className="text-3xl font-semibold text-ink">Terms</h1>
       <P>
         {site.name} is in a private test. Transcription is invite-only, free, and provided as-is, without a
         guaranteed availability date. There is no paid plan yet.

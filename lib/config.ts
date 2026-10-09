@@ -24,7 +24,9 @@ export type RuntimeConfig = ReturnType<typeof readConfig>;
 export function readConfig(env: Partial<AppEnv>) {
   return {
     allowlist: parseAllowlist(env.TRANSCRIBE_ALLOWLIST),
-    signupFreeMinutes: num(env.SIGNUP_FREE_MINUTES, 0),
+    signupFreeCredits: num(env.SIGNUP_FREE_CREDITS, 0),
+    stripeSecretKey: (env.STRIPE_SECRET_KEY ?? "").trim(),
+    stripeWebhookSecret: (env.STRIPE_WEBHOOK_SECRET ?? "").trim(),
     maxFileBytes: Math.round(num(env.MAX_FILE_MB, 50) * 1024 * 1024),
     maxDurationSec: Math.round(num(env.MAX_DURATION_MIN, 60) * 60),
     translateEstimateUsd: num(env.TRANSLATE_ESTIMATE_USD, 0.1),

@@ -10,7 +10,7 @@ Phase A marketing site for **quote-ready Spanish–English interview transcripts
 
 - Landing, samples, SEO discovery pages, privacy/terms
 - Waitlist form → `POST /api/waitlist` → D1 table `waitlist`
-- **No** audio upload, STT pipeline, or Stripe checkout yet
+- Invite-only transcription billed in **credits** (1 credit ≈ 1 minute), with Stripe Checkout for subscriptions and packs
 
 ## Prerequisites
 
@@ -192,6 +192,7 @@ The contract test in `lib/engines/engines.test.ts` checks every registered adapt
 | `/for-journalists` | ICP-focused copy |
 | `/otter-alternative-for-journalists` | Discovery SEO |
 | `/transcribe-spanish-english-interview` | Discovery SEO |
+| `/pricing` | Plans (month/year) and credit packs. Checkout requires a signed-in allowlisted account |
 | `/privacy` · `/terms` | Minimal legal stubs |
 
 ## Copy rules
@@ -212,6 +213,45 @@ migrations/          # D1 SQL
 open-next.config.ts
 wrangler.toml        # Worker + D1 + assets bindings
 ```
+
+## Credits and Stripe (test mode)
+
+Usage is a `credit_ledger` in D1. **60 units = 1 credit ≈ 1 minute** of default-engine audio. Kinds: `signup`, `subscription`, `pack`, `charge`, `refund`. Charges spend the signup grant first, then subscription credits, then packs (soonest expiry inside a pool). Packs expire 24 months after purchase. Signup credits and subscription credits do not expire. A yearly subscription is billed once a year and still mints **one month of credits at a time** while the paid period is active.
+
+`SIGNUP_FREE_CREDITS` (wrangler var, default `20`) replaces `SIGNUP_FREE_MINUTES`. Existing `minute_ledger` rows are copied by `migrations/0004_credit_ledger.sql` and are not granted a second time. A yearly plan does not drop 12 months of credits at once: each elapsed month of the paid period is minted once, on `invoice.paid` or the next account load.
+
+USD daily breakers (`USER_DAILY_SPEND_LIMIT_USD`, `DAILY_SPEND_LIMIT_USD`) are unchanged. Visitors still never see spend numbers.
+
+### Secrets and vars
+
+Set with `wrangler secret put` (never commit the values):
+
+| Name | Purpose |
+|------|---------|
+| `STRIPE_SECRET_KEY` | Test secret (`sk_test_…`) or, preferably, a restricted key (`rk_test_…`) that can create Checkout Sessions and Customers and read Subscriptions |
+| `STRIPE_WEBHOOK_SECRET` | Signing secret (`whsec_…`) for `POST /api/stripe/webhook` |
+| `AUTH_GOOGLE_ID` | Google OAuth client id. **Not set in production today** — the UI says sign-in is off until it is |
+| `AUTH_GOOGLE_SECRET` | Google OAuth client secret |
+| `AUTH_SECRET` | Auth.js session secret |
+
+Price IDs are in `wrangler.toml` (test mode, not secrets). Override with the same names in `.dev.vars` if a Price is rotated:
+
+`STRIPE_PRICE_STARTER_MONTHLY`, `STRIPE_PRICE_STARTER_YEARLY`, `STRIPE_PRICE_PRO_MONTHLY`, `STRIPE_PRICE_PRO_YEARLY`, `STRIPE_PRICE_STUDIO_MONTHLY`, `STRIPE_PRICE_STUDIO_YEARLY`, `STRIPE_PRICE_PACK_S`, `STRIPE_PRICE_PACK_M`, `STRIPE_PRICE_PACK_L`.
+
+Lookup keys (`switchquote_starter_monthly`, …) are accepted on webhooks if the Price ID does not match. `automatic_tax` is off.
+
+The Stripe Payment Links in the approved catalog are a **temporary hosted fallback**. They do not attach `user_id`, so this app will not credit an account from those links. In-app Checkout (`POST /api/checkout`) sets `client_reference_id` and metadata (`user_id`, `sku`) and is the path that grants credits.
+
+### How an allowlisted account tests checkout
+
+1. `npx wrangler d1 migrations apply switchquote --remote` (includes `0004_credit_ledger.sql`).
+2. `wrangler secret put` the four auth/Stripe secrets above. Google OAuth must be configured or nobody can sign in (`google-not-configured` stays honest in the UI).
+3. In the Stripe Dashboard (test mode), add the endpoint `https://switchquote.potter-faa.workers.dev/api/stripe/webhook` for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `invoice.paid`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`.
+4. Sign in as an allowlisted Google account (`xiangqiling5204@gmail.com`), open `/pricing`, and start Checkout. Card `4242 4242 4242 4242` is the usual test card.
+5. Credits appear after the webhook, not when the browser lands on `/app?checkout=success`. Refresh `/app` or `/api/me` and confirm `creditsLeft`.
+6. Locally: `stripe listen --forward-to localhost:3000/api/stripe/webhook` and put that `whsec_…` in `.dev.vars` as `STRIPE_WEBHOOK_SECRET`.
+
+Fulfillment is idempotent on the Stripe event id and on ledger refs (`pack:{session}`, `sub:{subscription}:{YYYY-MM}`). Replaying a webhook does not double-credit.
 
 ## License
 

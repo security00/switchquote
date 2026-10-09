@@ -16,11 +16,12 @@
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.6",
+    "fflate": "^0.8.3",
     "next": "16.3.8",
+    "next-auth": "5.0.0-beta.32",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "next-auth": "5.0.0-beta.32",
-    "fflate": "^0.8.3"
+    "stripe": "^23.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -30,8 +31,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
+    "tsx": "^4.20.0",
     "typescript": "^5",
-    "wrangler": "^4.135.0",
-    "tsx": "^4.20.0"
+    "wrangler": "^4.135.0"
   }
 }

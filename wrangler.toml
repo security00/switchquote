@@ -29,12 +29,23 @@ name = "EMAIL"
 allowed_sender_addresses = ["alerts@crayonink.com"]
 
 # Non-secret configuration. Secrets (DEEPGRAM_API_KEY, OPENROUTER_API_KEY, TURNSTILE_SECRET_KEY,
-# AUTH_SECRET, AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET) are set with `wrangler secret put` — never here.
+# AUTH_SECRET, AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET)
+# are set with `wrangler secret put` — never here. Price IDs below are not secrets.
 [vars]
 # Debug phase: only these Google accounts may run paid inference. Empty or "*" = every signed-in account.
 TRANSCRIBE_ALLOWLIST = "xiangqiling5204@gmail.com"
-# One-time free minutes for a new allowed account (lifetime). Placeholder from the PRD draft (15); 掌柜 decides.
-SIGNUP_FREE_MINUTES = "15"
+# One-time credits for a new allowed account (lifetime). 1 credit ≈ 1 minute of default-engine audio.
+SIGNUP_FREE_CREDITS = "20"
+# Test-mode Price IDs (acct_1TTNr52eJNPpLqRe, livemode=false). Not secrets; lookup keys still match if an ID is overridden.
+STRIPE_PRICE_STARTER_MONTHLY = "price_1UOb1e2eJNPpLqRezNIp4zdd"
+STRIPE_PRICE_STARTER_YEARLY = "price_1UOb1e2eJNPpLqReb17osn9I"
+STRIPE_PRICE_PRO_MONTHLY = "price_1UOb1f2eJNPpLqRe1qA1VYtu"
+STRIPE_PRICE_PRO_YEARLY = "price_1UOb1g2eJNPpLqRequjXWPNi"
+STRIPE_PRICE_STUDIO_MONTHLY = "price_1UOb1h2eJNPpLqRechOUH6QW"
+STRIPE_PRICE_STUDIO_YEARLY = "price_1UOb1h2eJNPpLqReuoZeki02"
+STRIPE_PRICE_PACK_S = "price_1UOb1i2eJNPpLqRedv4IAomN"
+STRIPE_PRICE_PACK_M = "price_1UOb1i2eJNPpLqRer9JWXPsw"
+STRIPE_PRICE_PACK_L = "price_1UOb1k2eJNPpLqRex9gwG2ty"
 MAX_FILE_MB = "50"
 MAX_DURATION_MIN = "60"
 # USD breakers per UTC day (STT + translation). Visitors never see these numbers.

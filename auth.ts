@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { requireEnv } from "@/lib/cf";
-import { ensureSignupGrant } from "@/lib/minutes";
+import { ensureSignupGrant } from "@/lib/credits";
 import { getAuthSecret } from "@/lib/secrets";
 import { upsertGoogleUser } from "@/lib/users";
 

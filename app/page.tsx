@@ -58,7 +58,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <h2 className="text-3xl">Private test: prove the transcript quality</h2>
           <p className="mt-3 max-w-2xl leading-relaxed text-ink-soft">
-            Uploads are invite-only while we test, and there is no checkout. Join the waitlist, read the samples, and tell us if you run bilingual interviews weekly.
+            Uploads are invite-only while we test. Allowlisted accounts can buy credits; everyone else can join the waitlist. Read the samples and tell us if you run bilingual interviews weekly.
           </p>
           <ul className="mt-10 grid gap-px overflow-hidden rounded-xl border border-rule bg-rule sm:grid-cols-3">
             {[

@@ -13,8 +13,9 @@ export default function TermsPage() {
     <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
       <h1 className="text-3xl font-semibold text-ink">Terms</h1>
       <P>
-        {site.name} is in a private test. Transcription is invite-only, free, and provided as-is, without a
-        guaranteed availability date. There is no paid plan yet.
+        {site.name} is in a private test. Transcription is invite-only and provided as-is, without a guaranteed
+        availability date. Allowlisted accounts can buy credits through Stripe test checkout. A credit is spent when
+        a transcription starts and returned if that transcription fails.
       </P>
       <P>
         Transcripts are AI drafts — not certified legal or medical records. Verify every quote before you publish.

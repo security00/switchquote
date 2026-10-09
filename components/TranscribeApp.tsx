@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn, signOut } from "next-auth/react";
 import { clock, segmentText, speakerLabel, switchPoints, toJson, toSrt, toTxt, type Transcript } from "@/lib/transcript";
 import { toDocx } from "@/lib/docx";
+import { formatCreditAmount } from "@/lib/credit-units";
 
 type Me = {
   signedIn: boolean;
@@ -14,7 +15,7 @@ type Me = {
   privateTest: boolean;
   email?: string | null;
   access?: "open" | "allowed" | "waitlist";
-  secondsLeft?: number;
+  creditsLeft?: number;
   transcripts?: { id: string; filename: string; duration_sec: number; status: string; created_at: number }[];
 };
 
@@ -53,7 +54,7 @@ function minutes(sec: number) {
   return sec >= 60 ? `${Math.floor(sec / 60)} min ${Math.round(sec % 60)} s` : `${Math.round(sec)} s`;
 }
 
-export function TranscribeApp({ introTop, introBody }: { introTop?: React.ReactNode; introBody?: React.ReactNode } = {}) {
+export function TranscribeApp({ introTop, introBody, notice }: { introTop?: React.ReactNode; introBody?: React.ReactNode; notice?: string | null } = {}) {
   const [me, setMe] = useState<Me | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState<"" | "upload" | "translate">("");
@@ -199,7 +200,15 @@ export function TranscribeApp({ introTop, introBody }: { introTop?: React.ReactN
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1 text-[13px] text-ink-soft">
           <span>
             Signed in as <strong className="font-medium text-ink">{me.email}</strong>
-            {me.access !== "waitlist" && typeof me.secondsLeft === "number" ? <> · Free minutes left: <strong className="font-medium text-ink">{minutes(me.secondsLeft)}</strong></> : null}
+            {me.access !== "waitlist" && typeof me.creditsLeft === "number" ? (
+              <>
+                {" "}
+                · Credits left: <strong className="font-medium text-ink">{formatCreditAmount(me.creditsLeft)}</strong>{" "}
+                <Link href="/pricing" className="text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent">
+                  Pricing
+                </Link>
+              </>
+            ) : null}
           </span>
           <button onClick={() => signOut({ redirectTo: "/app" })} className="text-ink-faint underline-offset-4 hover:text-ink hover:underline">Sign out</button>
         </div>
@@ -257,6 +266,11 @@ export function TranscribeApp({ introTop, introBody }: { introTop?: React.ReactN
 
   return (
     <div>
+      {notice ? (
+        <p className="mb-6 rounded-md border border-rule bg-surface px-4 py-3 text-sm leading-relaxed text-ink-soft" role="status">
+          {notice}
+        </p>
+      ) : null}
       <div className="grid gap-x-12 gap-y-6 [grid-template-areas:'top'_'tool'_'body'] lg:grid-cols-[minmax(0,1fr)_420px] lg:grid-rows-[auto_1fr] lg:[grid-template-areas:'top_tool'_'body_tool']">
         <div className="[grid-area:top]">{introTop}</div>
         <div className="[grid-area:tool]">{toolColumn}</div>

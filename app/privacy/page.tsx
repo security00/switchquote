@@ -16,7 +16,7 @@ export default function PrivacyPage() {
       <P>
         Waitlist: email, role, whether you run bilingual interviews, and a timestamp. Sign-in: your Google
         account email, name and profile picture. Transcription: the transcripts you create, the file name and
-        length, and usage records needed to run free minutes and abuse limits.
+        length, and usage records needed to run credits and abuse limits. If you buy credits, Stripe processes the payment.
       </P>
       <h2 className="mt-8 text-lg font-semibold text-ink">Your audio</h2>
       <P>
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
       </P>
       <h2 className="mt-8 text-lg font-semibold text-ink">Who processes it</h2>
       <P>
-        Cloudflare (hosting, database, bot protection), Deepgram (speech-to-text), and — only when you click
+        Cloudflare (hosting, database, bot protection), Deepgram (speech-to-text), Stripe (payments), and — only when you click
         Translate to English — OpenRouter, which routes the request to Google Gemini. Google handles sign-in.
       </P>
       <P>We do not sell your data.</P>

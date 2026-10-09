@@ -5,8 +5,19 @@ export type AppEnv = {
   DEPLOY_CHANNEL?: string;
   /** Comma-separated Google emails allowed to run paid inference. Empty or "*" = every signed-in account. */
   TRANSCRIBE_ALLOWLIST?: string;
-  /** One-time minutes for a new allowed account (lifetime, never resets). */
-  SIGNUP_FREE_MINUTES?: string;
+  /** One-time credits for a new allowed account (lifetime, never resets). 1 credit ≈ 1 minute. */
+  SIGNUP_FREE_CREDITS?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  STRIPE_PRICE_STARTER_MONTHLY?: string;
+  STRIPE_PRICE_STARTER_YEARLY?: string;
+  STRIPE_PRICE_PRO_MONTHLY?: string;
+  STRIPE_PRICE_PRO_YEARLY?: string;
+  STRIPE_PRICE_STUDIO_MONTHLY?: string;
+  STRIPE_PRICE_STUDIO_YEARLY?: string;
+  STRIPE_PRICE_PACK_S?: string;
+  STRIPE_PRICE_PACK_M?: string;
+  STRIPE_PRICE_PACK_L?: string;
   MAX_FILE_MB?: string;
   MAX_DURATION_MIN?: string;
   /** Upper estimate for one Translate to English call (actual OpenRouter cost is recorded after). */

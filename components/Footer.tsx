@@ -18,6 +18,9 @@ export function Footer() {
             </p>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <Link href="/pricing" className="text-ink-soft hover:text-accent">
+              Pricing
+            </Link>
             <Link href="/privacy" className="text-ink-soft hover:text-accent">
               Privacy
             </Link>
@@ -33,7 +36,7 @@ export function Footer() {
           </div>
         </div>
         <p className="mt-8 border-t border-rule pt-6 text-xs text-ink-faint">
-          © {new Date().getFullYear()} {site.name}. Private test — transcription is invite-only for now; no billing yet.
+          © {new Date().getFullYear()} {site.name}. Private test — transcription is invite-only. Allowlisted accounts can buy credits.
         </p>
       </div>
     </footer>

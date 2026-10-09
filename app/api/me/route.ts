@@ -1,7 +1,8 @@
 import { getEnv, nowSeconds, runInBackground } from "@/lib/cf";
 import { readConfig } from "@/lib/config";
 import { accessForUser } from "@/lib/access";
-import { balanceSeconds, ensureSignupGrant } from "@/lib/minutes";
+import { creditsFromUnits } from "@/lib/credit-units";
+import { balanceUnits, ensureSignupGrant, ensureSubscriptionGrants } from "@/lib/credits";
 import { userEmail } from "@/lib/users";
 import { fail, json, sessionUserId } from "@/lib/http";
 
@@ -17,13 +18,18 @@ export async function GET() {
     turnstileSiteKey: c.turnstileSiteKey || null,
     limits: { maxFileMb: Math.round(c.maxFileBytes / 1024 / 1024), maxDurationMin: Math.round(c.maxDurationSec / 60) },
     privateTest: c.allowlist !== null,
+    checkoutConfigured: Boolean(c.stripeSecretKey),
+    signupCredits: c.signupFreeCredits,
   };
   // Retention: transcripts expire after 30 days (audio is never stored).
   await runInBackground(env.DB.prepare(`DELETE FROM transcripts WHERE expires_at < ?`).bind(nowSeconds()).run());
   const userId = await sessionUserId();
   if (!userId) return json({ ...base, signedIn: false });
   const access = await accessForUser(env, userId);
-  if (access !== "waitlist") await ensureSignupGrant(env, userId);
+  if (access !== "waitlist") {
+    await ensureSignupGrant(env, userId);
+    await ensureSubscriptionGrants(env.DB, userId);
+  }
   const recent = await env.DB
     .prepare(`SELECT id, filename, duration_sec, status, created_at FROM transcripts WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`)
     .bind(userId)
@@ -33,7 +39,7 @@ export async function GET() {
     signedIn: true,
     email: await userEmail(env.DB, userId),
     access,
-    secondsLeft: Math.max(0, await balanceSeconds(env.DB, userId)),
+    creditsLeft: Math.max(0, creditsFromUnits(await balanceUnits(env.DB, userId))),
     transcripts: recent.results || [],
   });
 }

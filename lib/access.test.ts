@@ -14,7 +14,7 @@ test("allowlist is case-insensitive and blocks everyone else", () => {
 
 test("config defaults are conservative", () => {
   const c = readConfig({});
-  assert.equal(c.signupFreeMinutes, 0);
+  assert.equal(c.signupFreeCredits, 0);
   assert.equal(c.maxFileBytes, 50 * 1024 * 1024);
   assert.equal(c.maxDurationSec, 3600);
   assert.equal(c.langTagger, "llm");

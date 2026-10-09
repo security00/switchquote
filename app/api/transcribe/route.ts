@@ -3,7 +3,8 @@ import { readConfig } from "@/lib/config";
 import { NOT_ALLOWED_MESSAGE, accessForUser } from "@/lib/access";
 import { checkHuman } from "@/lib/human-check";
 import { detectDuration, MIME_BY_FORMAT } from "@/lib/duration";
-import { balanceSeconds, billableSeconds, chargeSeconds, ensureSignupGrant, refundSeconds } from "@/lib/minutes";
+import { creditsFromUnits, billableUnits } from "@/lib/credit-units";
+import { balanceUnits, chargeCredits, ensureSignupGrant, ensureSubscriptionGrants, refundCredits } from "@/lib/credits";
 import { BUSY_MESSAGE, USER_LIMIT_MESSAGE, checkAdmission, recordSubmission, settle } from "@/lib/spend";
 import { chooseEngine } from "@/lib/engines/registry";
 import { tagEstimateUsd, tagLanguages } from "@/lib/langtag";
@@ -18,7 +19,7 @@ const TRANSCRIPT_TTL_SECONDS = 30 * 24 * 3600;
  * Upload → configured engine (default Deepgram Nova-3 multi; see lib/engines) → transcript that keeps
  * both languages; engines without per-word language get the fallback switch detector (lib/langtag.ts).
  * Gate order: sign-in (401) → allowlist (403) → Turnstile (403) → size/format/duration (413/415)
- * → engine choice (admin-only override, 403/503) → minutes (402) → USD breakers (503 / 429) → paid call(s).
+ * → engine choice (admin-only override, 403/503) → credits (402) → USD breakers (503 / 429) → paid call(s).
  * Audio is never stored; it is streamed to the STT provider and dropped.
  */
 export async function POST(req: Request) {
@@ -67,15 +68,16 @@ export async function POST(req: Request) {
   }
 
   await ensureSignupGrant(env, userId);
-  const seconds = billableSeconds(detected.seconds);
-  const left = await balanceSeconds(env.DB, userId);
-  if (left < seconds) {
-    return withCookie({ ok: false, code: "no_minutes", error: "Not enough free minutes left on this account for this file.", secondsLeft: Math.max(0, left) }, 402);
+  await ensureSubscriptionGrants(env.DB, userId);
+  const units = billableUnits(detected.seconds);
+  const left = await balanceUnits(env.DB, userId);
+  if (left < units) {
+    return withCookie({ ok: false, code: "no_credits", error: "Not enough credits left on this account for this file.", creditsLeft: Math.max(0, creditsFromUnits(left)) }, 402);
   }
 
   const needsTagger = engine.caps.languageTags === "none" && c.langTagger === "llm" && Boolean(env.OPENROUTER_API_KEY);
-  const sttEstimateUsd = (seconds / 60) * engine.listUsdPerMin(env);
-  const tagEstimate = needsTagger ? tagEstimateUsd(seconds) : 0;
+  const sttEstimateUsd = (units / 60) * engine.listUsdPerMin(env);
+  const tagEstimate = needsTagger ? tagEstimateUsd(units) : 0;
   const admission = await checkAdmission(env, userId, sttEstimateUsd + tagEstimate);
   if (!admission.ok) {
     return admission.scope === "global"
@@ -94,7 +96,11 @@ export async function POST(req: Request) {
     )
     .bind(id, userId, filename, file.type || MIME_BY_FORMAT[detected.format], file.size, detected.seconds, `${engine.id}/${model}`, now, now + TRANSCRIPT_TTL_SECONDS)
     .run();
-  await chargeSeconds(env.DB, userId, seconds, id);
+  const charged = await chargeCredits(env.DB, userId, units, id);
+  if (!charged.ok) {
+    await env.DB.prepare(`DELETE FROM transcripts WHERE id = ? AND user_id = ?`).bind(id, userId).run();
+    return withCookie({ ok: false, code: "no_credits", error: "Not enough credits left on this account for this file.", creditsLeft: Math.max(0, creditsFromUnits(charged.unitsLeft)) }, 402);
+  }
   const sttEvent = await recordSubmission(env, {
     userId,
     email,
@@ -111,10 +117,10 @@ export async function POST(req: Request) {
   const result = await engine.transcribe({ audio, mime: MIME_BY_FORMAT[detected.format], format: detected.format, detectedSec: detected.seconds, env, referer });
   if (!result.ok) {
     await settle(env, sttEvent, { status: "failed", httpStatus: result.httpStatus, actualUsd: result.cost?.usd ?? null, costSource: result.cost?.source ?? "estimate" });
-    await refundSeconds(env.DB, userId, seconds, id);
+    await refundCredits(env.DB, userId, units, id);
     await env.DB.prepare(`UPDATE transcripts SET status = 'failed', error = ? WHERE id = ?`).bind(result.error.slice(0, 300), id).run();
     console.error("[transcribe] engine failed", engine.id, result.httpStatus, result.error);
-    return withCookie({ ok: false, code: "provider_failed", error: "Transcription failed. Your minutes were not used." }, 502);
+    return withCookie({ ok: false, code: "provider_failed", error: "Transcription failed. Your credits were not used." }, 502);
   }
   await settle(env, sttEvent, { status: "ok", httpStatus: result.httpStatus, actualUsd: result.cost.usd, costSource: result.cost.source, audioSeconds: result.durationSec, model: result.model });
 

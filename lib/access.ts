@@ -4,7 +4,7 @@ import { userEmail } from "./users";
 
 /**
  * Debug-phase gate for paid inference (TRANSCRIBE_ALLOWLIST). Public pages are never gated.
- * - "open":     no allowlist; every signed-in account may transcribe (within its minutes).
+ * - "open":     no allowlist; every signed-in account may transcribe (within its credits).
  * - "allowed":  allowlist active and this account is on it.
  * - "waitlist": allowlist active and this account is not on it.
  */

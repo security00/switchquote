@@ -6,10 +6,17 @@ export const metadata: Metadata = {
   description: "Upload a Spanish–English interview and get a transcript that keeps both languages, with switch-point highlights.",
 };
 
-export default function AppPage() {
+export default async function AppPage({ searchParams }: { searchParams: Promise<{ checkout?: string | string[] }> }) {
+  const query = await searchParams;
+  const checkout = Array.isArray(query.checkout) ? query.checkout[0] : query.checkout;
   return (
     <section className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-12">
       <TranscribeApp
+        notice={
+          checkout === "success"
+            ? "Payment submitted. Credits show up here after Stripe confirms the payment — this page does not add them. Refresh in a moment if the balance has not moved."
+            : null
+        }
         introTop={
           <>
             <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-es">Transcribe, don&apos;t translate</p>

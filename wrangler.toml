@@ -37,7 +37,7 @@ TRANSCRIBE_ALLOWLIST = "xiangqiling5204@gmail.com"
 # Temporary anonymous smoke path. Not a public launch and not an allowlist change.
 # "1" / "true" / "yes" / "on" lets a signed-out browser run default transcribe + translate.
 # Turnstile, the USD breakers, and a per-IP daily request cap still apply. Anything else is off.
-SMOKE_ANON = "1"
+SMOKE_ANON = "0"
 # One-time credits for a new allowed account (lifetime). 1 credit ≈ 1 minute of default-engine audio.
 SIGNUP_FREE_CREDITS = "20"
 # Test-mode Price IDs (acct_1TTNr52eJNPpLqRe, livemode=false). Not secrets; lookup keys still match if an ID is overridden.

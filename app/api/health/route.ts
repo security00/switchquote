@@ -23,6 +23,7 @@ export async function GET() {
       translate: { provider: "openrouter", model: c.translateModel, configured: Boolean(env.OPENROUTER_API_KEY) },
       login: c.googleConfigured ? "google" : "google-not-configured",
       privateTest: c.allowlist !== null,
+      smokeAnon: c.smokeAnon,
       signupFreeCredits: c.signupFreeCredits,
       checkout: c.stripeSecretKey && c.stripeWebhookSecret ? "configured" : "unconfigured",
       limits: { maxFileMb: Math.round(c.maxFileBytes / 1024 / 1024), maxDurationMin: Math.round(c.maxDurationSec / 60) },

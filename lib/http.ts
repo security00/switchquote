@@ -1,10 +1,11 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
-export function json(body: unknown, status = 200, setCookie: string | null = null): NextResponse {
+export function json(body: unknown, status = 200, setCookie: string | string[] | null = null): NextResponse {
   const res = NextResponse.json(body, { status });
   res.headers.set("Cache-Control", "no-store");
-  if (setCookie) res.headers.append("Set-Cookie", setCookie);
+  const cookies = (Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : []).filter(Boolean);
+  for (const cookie of cookies) res.headers.append("Set-Cookie", cookie);
   return res;
 }
 

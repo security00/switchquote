@@ -14,6 +14,12 @@ export function parseAllowlist(raw: string | undefined): string[] | null {
     .filter(Boolean);
 }
 
+/** Explicit on-values only. Empty, "0", and "*" stay off. */
+export function parseSmokeAnon(raw: string | undefined): boolean {
+  const v = (raw ?? "").trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
+}
+
 function parseTagger(raw: string | undefined): "llm" | "heuristic" | "off" {
   const v = (raw ?? "").trim().toLowerCase();
   return v === "heuristic" || v === "off" ? v : "llm";
@@ -24,6 +30,7 @@ export type RuntimeConfig = ReturnType<typeof readConfig>;
 export function readConfig(env: Partial<AppEnv>) {
   return {
     allowlist: parseAllowlist(env.TRANSCRIBE_ALLOWLIST),
+    smokeAnon: parseSmokeAnon(env.SMOKE_ANON),
     signupFreeCredits: num(env.SIGNUP_FREE_CREDITS, 0),
     stripeSecretKey: (env.STRIPE_SECRET_KEY ?? "").trim(),
     stripeWebhookSecret: (env.STRIPE_WEBHOOK_SECRET ?? "").trim(),

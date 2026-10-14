@@ -4,6 +4,7 @@ import { userEmail } from "./users";
 
 /**
  * Debug-phase gate for paid inference (TRANSCRIBE_ALLOWLIST). Public pages are never gated.
+ * Signed-in accounts only. The temporary SMOKE_ANON path does not call this.
  * - "open":     no allowlist; every signed-in account may transcribe (within its credits).
  * - "allowed":  allowlist active and this account is on it.
  * - "waitlist": allowlist active and this account is not on it.

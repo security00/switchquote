@@ -5,6 +5,12 @@ export type AppEnv = {
   DEPLOY_CHANNEL?: string;
   /** Comma-separated Google emails allowed to run paid inference. Empty or "*" = every signed-in account. */
   TRANSCRIBE_ALLOWLIST?: string;
+  /**
+   * Temporary anonymous smoke path. "1" | "true" | "yes" | "on" allows unauthenticated
+   * transcribe + translate (Turnstile, USD breakers, and a per-IP daily cap still apply).
+   * Anything else keeps sign-in required. Not a public launch.
+   */
+  SMOKE_ANON?: string;
   /** One-time credits for a new allowed account (lifetime, never resets). 1 credit ≈ 1 minute. */
   SIGNUP_FREE_CREDITS?: string;
   STRIPE_SECRET_KEY?: string;

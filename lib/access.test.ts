@@ -19,4 +19,14 @@ test("config defaults are conservative", () => {
   assert.equal(c.maxDurationSec, 3600);
   assert.equal(c.langTagger, "llm");
   assert.equal(c.isPreview, false);
+  assert.equal(c.smokeAnon, false);
+  assert.equal(readConfig({ SMOKE_ANON: "0" }).smokeAnon, false);
+  assert.equal(readConfig({ SMOKE_ANON: "1" }).smokeAnon, true);
+  assert.equal(readConfig({ SMOKE_ANON: "true" }).smokeAnon, true);
+  assert.equal(readConfig({ SMOKE_ANON: "yes" }).smokeAnon, true);
+  assert.equal(readConfig({ SMOKE_ANON: "on" }).smokeAnon, true);
+  assert.equal(readConfig({ SMOKE_ANON: "*" }).smokeAnon, false);
+  const gated = readConfig({ SMOKE_ANON: "1", TRANSCRIBE_ALLOWLIST: "xiangqiling5204@gmail.com" });
+  assert.deepEqual(gated.allowlist, ["xiangqiling5204@gmail.com"]);
+  assert.equal(gated.smokeAnon, true);
 });

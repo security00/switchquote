@@ -13,6 +13,7 @@ type Me = {
   turnstileSiteKey: string | null;
   limits: { maxFileMb: number; maxDurationMin: number };
   privateTest: boolean;
+  smokeAnon?: boolean;
   email?: string | null;
   access?: "open" | "allowed" | "waitlist";
   creditsLeft?: number;
@@ -80,7 +81,8 @@ export function TranscribeApp({ introTop, introBody, notice }: { introTop?: Reac
     };
   }, []);
 
-  const canUse = Boolean(me?.signedIn && me.access !== "waitlist");
+  const smokeGuest = Boolean(me && !me.signedIn && me.smokeAnon);
+  const canUse = Boolean((me?.signedIn && me.access !== "waitlist") || smokeGuest);
 
   useEffect(() => {
     if (!canUse || !me?.turnstileSiteKey || !widgetRef.current) return;
@@ -177,7 +179,7 @@ export function TranscribeApp({ introTop, introBody, notice }: { introTop?: Reac
     </div>
   ) : (
     <div className="space-y-3">
-      {!me.signedIn && (
+      {!me.signedIn && !smokeGuest && (
         <div className="rounded-xl border border-rule bg-surface p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.12)]">
           <h2 className="text-xl">Sign in to transcribe</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-soft">
@@ -223,6 +225,11 @@ export function TranscribeApp({ introTop, introBody, notice }: { introTop?: Reac
 
       {canUse && (
         <div className="rounded-xl border border-rule bg-surface p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.12)] sm:p-6">
+          {smokeGuest && (
+            <p className="mb-4 rounded-md border border-dashed border-rule-strong bg-paper px-3 py-2.5 text-sm leading-relaxed text-ink-soft">
+              Private smoke test — not a public launch. Signed-in transcription stays invite-only. Complete the human check, then upload a short clip. Results from this browser are deleted after 24 hours. Audio is not stored.
+            </p>
+          )}
           <label className="block text-sm font-semibold text-ink" htmlFor="audio">Interview audio</label>
           <p className="mt-1 text-xs leading-relaxed text-ink-faint">
             MP3, M4A, MP4, WAV, OGG or FLAC · up to {me.limits.maxFileMb} MB and {me.limits.maxDurationMin} minutes. We transcribe — we don&apos;t translate your Spanish into English. Audio isn&apos;t stored.

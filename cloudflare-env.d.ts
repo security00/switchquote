@@ -7,6 +7,7 @@ interface __BaseEnv_CloudflareEnv {
 	IMAGES: ImagesBinding;
 	ASSETS: Fetcher;
 	TRANSCRIBE_ALLOWLIST: "xiangqiling5204@gmail.com";
+	SMOKE_ANON: "0";
 	SIGNUP_FREE_CREDITS: "20";
 	STRIPE_PRICE_STARTER_MONTHLY: "price_1UOb1e2eJNPpLqRezNIp4zdd";
 	STRIPE_PRICE_STARTER_YEARLY: "price_1UOb1e2eJNPpLqReb17osn9I";

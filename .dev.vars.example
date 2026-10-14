@@ -1,4 +1,7 @@
 NEXTJS_ENV=development
+# SMOKE_ANON=0
+# Set to 1 only for a private smoke test of anonymous transcribe + translate.
+# Default off. Does not change TRANSCRIBE_ALLOWLIST, noindex, pricing, or signup credits.
 # Keys (names only here; set real values locally / with `wrangler secret put`)
 # DEEPGRAM_API_KEY=
 # ASSEMBLYAI_API_KEY=

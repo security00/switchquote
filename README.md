@@ -253,6 +253,17 @@ The Stripe Payment Links in the approved catalog are a **temporary hosted fallba
 
 Fulfillment is idempotent on the Stripe event id and on ledger refs (`pack:{session}`, `sub:{subscription}:{YYYY-MM}`). Replaying a webhook does not double-credit.
 
+## Temporary anonymous smoke test
+
+`SMOKE_ANON` (wrangler `[vars]`, default `"0"`) is a private switch for checking the default Deepgram → translate path without Google or Stripe. It is not a public launch.
+
+- **Off** (unset, `"0"`, or anything other than `1` / `true` / `yes` / `on`): signed-out `POST /api/transcribe` stays 401. `TRANSCRIBE_ALLOWLIST` still gates signed-in users.
+- **On**: a signed-out browser can use the existing upload form on `/app`. Turnstile is required (the route refuses if Turnstile is not configured). The USD breakers still apply, and the per-user breaker is keyed by IP so a new cookie does not reset it. Each IP may start **8** paid smoke calls per UTC day (one transcribe or one translate counts as one). Smoke transcripts are tied to an HttpOnly cookie and expire after **24 hours** (the existing `/api/me` cleanup deletes expired rows). No credits are charged, because there is no account. Engine override stays admin-only.
+- A signed-in session never takes this path, including waitlisted accounts.
+- `GET /api/health` includes `smokeAnon: true|false`.
+
+Turn it on by setting `SMOKE_ANON = "1"` in `wrangler.toml` (or the Worker variable in the Cloudflare dashboard) and redeploying. Turn it off by setting `"0"` and redeploying. A dashboard edit is overwritten by the next deploy from this file, which ships `"0"`.
+
 ## License
 
 Private / all rights reserved unless otherwise noted by the repo owner.

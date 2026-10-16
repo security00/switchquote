@@ -22,7 +22,7 @@ export function toDocx(t: Transcript): Uint8Array {
     para(run("AI draft — verify every quote before publishing. Spanish in teal; highlighted words mark a language switch.", { italic: true, color: "64748B" })),
   ];
   t.segments.forEach((s, si) => {
-    const runs = [run(`[${clock(s.start)}] ${speakerLabel(s.speaker)}: `, { bold: true })];
+    const runs = [run(`[${clock(s.start)}] ${speakerLabel(s.speaker, t.speakers)}: `, { bold: true })];
     s.words.forEach((w, wi) => {
       runs.push(run(`${wi ? " " : ""}`));
       runs.push(run(w.w, { color: w.lang === "es" ? "0F766E" : undefined, highlight: switches.has(`${si}:${wi}`) ? "yellow" : undefined }));

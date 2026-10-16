@@ -11,7 +11,7 @@ import { userEmail } from "./users";
  */
 export type Access = "open" | "allowed" | "waitlist";
 
-export const NOT_ALLOWED_MESSAGE = "Transcription is in a private test right now. This account isn't on the list yet — join the waitlist and we'll let you know.";
+export const NOT_ALLOWED_MESSAGE = "Transcription is in a private test right now. This account isn't on the list yet.";
 
 export function accessForEmail(allowlist: string[] | null, email: string | null | undefined): Access {
   if (!allowlist) return "open";

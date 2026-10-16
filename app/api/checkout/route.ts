@@ -41,7 +41,9 @@ export async function POST(req: Request) {
     });
     return json({ ok: true, url });
   } catch (e) {
-    console.error("[checkout]", e instanceof Error ? e.message : e);
+    const detail = e && typeof e === "object" && "detail" in e ? (e as { detail?: { message?: string; cause?: { message?: string } } }).detail : undefined;
+    const cause = detail?.cause?.message || detail?.message || (e instanceof Error ? e.message : "unknown");
+    console.error("[checkout]", cause.slice(0, 300));
     return fail(502, "stripe_failed", "Could not start checkout. Please try again.");
   }
 }

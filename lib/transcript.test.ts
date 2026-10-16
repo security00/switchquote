@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { segmentsFromDeepgram, switchPoints, toJson, toSrt, toTxt, type Transcript } from "./transcript";
+import { applyTranscriptEdit, formatQuote, segmentsFromDeepgram, switchPoints, toJson, toSrt, toTxt, type Transcript } from "./transcript";
 
 const dg = {
   metadata: { duration: 5 },
@@ -46,4 +46,53 @@ test("docx export is a zip with a document part", async () => {
   assert.ok(files["word/document.xml"]);
   assert.match(strFromU8(files["word/document.xml"]), /Pero/);
   assert.match(strFromU8(files["word/document.xml"]), /w:highlight w:val="yellow"/);
+});
+
+test("renames, corrections, and pull quotes use the journalist's text", () => {
+  const t: Transcript = {
+    id: "x",
+    filename: "a.wav",
+    durationSec: 5,
+    engine: "deepgram/nova-3",
+    createdAt: 0,
+    segments: segmentsFromDeepgram(dg),
+    translation: ["But they said no.", "Right?"],
+  };
+  const named = applyTranscriptEdit(t, { op: "speaker", speaker: 0, name: "  Mayor   García " });
+  assert.equal(named.ok, true);
+  if (!named.ok) return;
+  assert.equal(named.transcript.speakers?.["0"], "Mayor García");
+  assert.match(toTxt(named.transcript), /Mayor García \(mixed\): Pero ellos said no\./);
+  assert.match(toSrt(named.transcript), /Mayor García: Pero ellos said no\./);
+  const exported = JSON.parse(toJson(named.transcript));
+  assert.equal(exported.segments[0].speaker, "Mayor García");
+  assert.equal(exported.speakers["0"], "Mayor García");
+  assert.equal(formatQuote(named.transcript, { si: 0, wi: 3 }, { si: 0, wi: 0 }), "“Pero ellos said no.”\n— Mayor García, 00:00:00");
+  assert.equal(
+    formatQuote(named.transcript, { si: 0, wi: 2 }, { si: 1, wi: 0 }),
+    "Mayor García (00:00:00): “said no.”\nSpeaker 2 (00:00:02): “¿Verdad?”"
+  );
+
+  const corrected = applyTranscriptEdit(named.transcript, { op: "word", si: 0, wi: 2, w: " dijo ", lang: "es" });
+  assert.equal(corrected.ok, true);
+  if (!corrected.ok) return;
+  assert.equal(corrected.transcript.segments[0].words[2].w, "dijo");
+  assert.equal(corrected.transcript.segments[0].lang, "mixed");
+  assert.equal(corrected.transcript.translation?.[0], "");
+  assert.equal(corrected.transcript.translation?.[1], "Right?");
+  assert.deepEqual([...switchPoints(corrected.transcript.segments)].sort(), ["0:3", "1:0"]);
+  assert.equal(t.translation?.[0], "But they said no.");
+
+  const cleared = applyTranscriptEdit(named.transcript, { op: "speaker", speaker: 0, name: " " });
+  assert.equal(cleared.ok, true);
+  if (!cleared.ok) return;
+  assert.equal(cleared.transcript.speakers ?? null, null);
+  assert.equal(applyTranscriptEdit(t, { op: "speaker", speaker: 0, name: "x".repeat(81) }).ok, false);
+  assert.equal(applyTranscriptEdit(t, { op: "word", si: 0, wi: 0, w: " ", lang: "es" }).ok, false);
+
+  const dropped = applyTranscriptEdit(t, { op: "delete_word", si: 1, wi: 0 });
+  assert.equal(dropped.ok, true);
+  if (!dropped.ok) return;
+  assert.equal(dropped.transcript.segments.length, 1);
+  assert.deepEqual(dropped.transcript.translation, ["But they said no."]);
 });

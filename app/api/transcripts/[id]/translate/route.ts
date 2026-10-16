@@ -4,6 +4,7 @@ import { checkHuman } from "@/lib/human-check";
 import { BUSY_MESSAGE, USER_LIMIT_MESSAGE, checkAdmission, recordSubmission, settle } from "@/lib/spend";
 import { MAX_TRANSLATE_WORDS, translateEstimateUsd, translateSegments } from "@/lib/providers";
 import { loadTranscript } from "@/lib/store";
+import { translationIsComplete } from "@/lib/transcript";
 import { SMOKE_IP_LIMIT_MESSAGE, actorForRequest, reserveSmokeRequest } from "@/lib/smoke";
 import { fail, json, sessionUserId } from "@/lib/http";
 
@@ -27,7 +28,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/transcripts/[id
   const { id } = await ctx.params;
   const t = await loadTranscript(env.DB, actor.userId, id);
   if (!t || t.status !== "done") return fail(404, "not_found", "Transcript not found.");
-  if (t.translation) return json({ ok: true, translation: t.translation }, 200, cookies);
+  if (translationIsComplete(t.segments, t.translation)) return json({ ok: true, translation: t.translation }, 200, cookies);
 
   const words = t.segments.reduce((n, s) => n + s.words.length, 0);
   if (words > MAX_TRANSLATE_WORDS) return json({ ok: false, code: "too_long", error: "This transcript is too long to translate in one go." }, 413, cookies);

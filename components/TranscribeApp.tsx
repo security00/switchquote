@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { signIn, signOut } from "next-auth/react";
-import { clock, segmentText, speakerLabel, switchPoints, toJson, toSrt, toTxt, type Transcript } from "@/lib/transcript";
-import { toDocx } from "@/lib/docx";
+import { signIn } from "next-auth/react";
+import { sampleTranscript } from "@/lib/sample-transcript";
+import { durationLabel, type Transcript } from "@/lib/transcript";
 import { formatCreditAmount } from "@/lib/credit-units";
+import { DeskGuide } from "@/components/DeskGuide";
+import { TranscriptView } from "@/components/TranscriptView";
 
 type Me = {
   signedIn: boolean;
@@ -33,34 +35,12 @@ declare global {
 
 const ACCEPT = ".mp3,.m4a,.mp4,.wav,.ogg,.opus,.flac,audio/*,video/mp4";
 
-function download(name: string, data: BlobPart, type: string) {
-  const url = URL.createObjectURL(new Blob([data], { type }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-/** Two-way arrow drawn as SVG (the ⇄ glyph is missing from most UI fonts). */
-function SwitchArrows() {
-  return (
-    <svg viewBox="0 0 12 12" className="mr-0.5 h-[0.95em] w-[0.95em]" aria-hidden="true">
-      <path d="M2 4h7.5M7.5 2l2 2-2 2M10 8H2.5M4.5 6l-2 2 2 2" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function minutes(sec: number) {
-  return sec >= 60 ? `${Math.floor(sec / 60)} min ${Math.round(sec % 60)} s` : `${Math.round(sec)} s`;
-}
-
-export function TranscribeApp({ introTop, introBody, notice }: { introTop?: React.ReactNode; introBody?: React.ReactNode; notice?: string | null } = {}) {
+export function TranscribeApp({ introTop, notice, startWithSample = false }: { introTop?: React.ReactNode; notice?: string | null; startWithSample?: boolean } = {}) {
   const [me, setMe] = useState<Me | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState<"" | "upload" | "translate">("");
   const [error, setError] = useState("");
-  const [transcript, setTranscript] = useState<Transcript | null>(null);
+  const [transcript, setTranscript] = useState<Transcript | null>(() => (startWithSample ? structuredClone(sampleTranscript) : null));
   const [token, setToken] = useState("");
   const widgetRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
@@ -83,6 +63,7 @@ export function TranscribeApp({ introTop, introBody, notice }: { introTop?: Reac
 
   const smokeGuest = Boolean(me && !me.signedIn && me.smokeAnon);
   const canUse = Boolean((me?.signedIn && me.access !== "waitlist") || smokeGuest);
+  const back = startWithSample ? "/" : "/app";
 
   useEffect(() => {
     if (!canUse || !me?.turnstileSiteKey || !widgetRef.current) return;
@@ -156,22 +137,30 @@ export function TranscribeApp({ introTop, introBody, notice }: { introTop?: Reac
       const res = await fetch(`/api/transcripts/${transcript.id}/translate`, { method: "POST", headers: token ? { "x-turnstile-token": token } : {} });
       const body = (await res.json().catch(() => ({ error: `Translation failed (${res.status}).` }))) as { error?: string; translation?: string[] };
       if (!res.ok) setError(body.error || `Translation failed (${res.status}).`);
-      else setTranscript({ ...transcript, translation: body.translation ?? null });
+      else {
+        const id = transcript.id;
+        setTranscript((current) => (current && current.id === id ? { ...current, translation: body.translation ?? null } : current));
+      }
     } finally {
       if (token) resetWidget();
       setBusy("");
     }
   }
 
+  const isSample = Boolean(startWithSample && transcript?.id === sampleTranscript.id);
+
   async function remove() {
-    if (!transcript || !confirm("Delete this transcript now? This can't be undone.")) return;
+    if (!transcript) return;
+    if (isSample) {
+      if (!confirm("Reset this sample to the original words?")) return;
+      setTranscript(structuredClone(sampleTranscript));
+      return;
+    }
+    if (!confirm("Delete this transcript now? This can't be undone.")) return;
     await fetch(`/api/transcripts/${transcript.id}`, { method: "DELETE" });
-    setTranscript(null);
+    setTranscript(startWithSample ? structuredClone(sampleTranscript) : null);
     void loadMe();
   }
-
-  const switches = useMemo(() => (transcript ? switchPoints(transcript.segments) : new Set<string>()), [transcript]);
-  const base = transcript ? transcript.filename.replace(/\.[^.]+$/, "") || "transcript" : "transcript";
 
   const toolColumn = !me ? (
     <div className="rounded-xl border border-rule bg-surface p-6 shadow-sm">
@@ -181,45 +170,47 @@ export function TranscribeApp({ introTop, introBody, notice }: { introTop?: Reac
     <div className="space-y-3">
       {!me.signedIn && !smokeGuest && (
         <div className="rounded-xl border border-rule bg-surface p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.12)]">
-          <h2 className="text-xl">Sign in to transcribe</h2>
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-es">{startWithSample ? "Your interview" : "Step 1 · Start here"}</p>
+          <h2 className="mt-2 text-xl">{startWithSample ? "Upload your interview" : "Sign in to transcribe"}</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-            Transcription needs a Google account. {me.privateTest ? "It's in a private test for now; everyone else can join the waitlist." : ""}
+            {startWithSample
+              ? "The sample is ready to edit. Sign in to transcribe a file of your own."
+              : "Use Google, then upload the interview. The three steps show what to do once the transcript opens."}
+            {me.privateTest ? " Transcription is in a private test for now." : ""}
           </p>
+          {startWithSample ? (
+            <button
+              type="button"
+              onClick={() => me.googleConfigured && signIn("google", { redirectTo: back })}
+              disabled={!me.googleConfigured}
+              className="mt-4 w-full rounded-md border border-dashed border-rule-strong bg-paper px-4 py-6 text-left text-sm text-ink-soft hover:border-accent/50 disabled:cursor-not-allowed"
+            >
+              <span className="block font-semibold text-ink">Choose an audio file</span>
+              <span className="mt-1 block text-xs leading-relaxed">MP3, M4A, MP4, WAV, OGG or FLAC · up to {me.limits.maxFileMb} MB and {me.limits.maxDurationMin} minutes.</span>
+            </button>
+          ) : null}
           {me.googleConfigured ? (
-            <button onClick={() => signIn("google", { redirectTo: "/app" })} className="mt-5 w-full rounded-md bg-accent px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-accent-strong sm:w-auto">
-              Continue with Google
+            <button onClick={() => signIn("google", { redirectTo: back })} className="mt-4 w-full rounded-md bg-accent px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-accent-strong sm:w-auto">
+              {startWithSample ? "Sign in to upload" : "Continue with Google"}
             </button>
           ) : (
-            <p className="mt-5 rounded-md border border-dashed border-rule-strong bg-paper px-3 py-2.5 text-sm text-ink-soft">Google sign-in isn&apos;t switched on yet.</p>
+            <p className="mt-4 rounded-md border border-dashed border-rule-strong bg-paper px-3 py-2.5 text-sm text-ink-soft">Google sign-in isn&apos;t switched on yet.</p>
           )}
-          <p className="mt-4 text-sm">
-            <Link href="/#waitlist" className="font-medium text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent">Join the waitlist →</Link>
-          </p>
         </div>
       )}
 
-      {me.signedIn && (
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1 text-[13px] text-ink-soft">
-          <span>
-            Signed in as <strong className="font-medium text-ink">{me.email}</strong>
-            {me.access !== "waitlist" && typeof me.creditsLeft === "number" ? (
-              <>
-                {" "}
-                · Credits left: <strong className="font-medium text-ink">{formatCreditAmount(me.creditsLeft)}</strong>{" "}
-                <Link href="/pricing" className="text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent">
-                  Pricing
-                </Link>
-              </>
-            ) : null}
-          </span>
-          <button onClick={() => signOut({ redirectTo: "/app" })} className="text-ink-faint underline-offset-4 hover:text-ink hover:underline">Sign out</button>
-        </div>
-      )}
+      {me.signedIn && me.access !== "waitlist" && typeof me.creditsLeft === "number" ? (
+        <p className="px-1 text-[13px] text-ink-soft">
+          Credits left: <strong className="font-medium text-ink">{formatCreditAmount(me.creditsLeft)}</strong>{" "}
+          <Link href="/pricing" className="text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent">
+            Pricing
+          </Link>
+        </p>
+      ) : null}
 
       {me.signedIn && me.access === "waitlist" && (
         <div className="rounded-xl border border-es-line/30 bg-es-tint p-6 text-sm leading-relaxed text-ink">
-          Transcription is in a private test right now. This account isn&apos;t on the list yet —{" "}
-          <Link href="/#waitlist" className="font-medium underline underline-offset-4">join the waitlist</Link> and we&apos;ll let you know.
+          Transcription is in a private test right now. This account isn&apos;t on the list yet.
         </div>
       )}
 
@@ -230,7 +221,8 @@ export function TranscribeApp({ introTop, introBody, notice }: { introTop?: Reac
               Private smoke test — not a public launch. Signed-in transcription stays invite-only. Complete the human check, then upload a short clip. Results from this browser are deleted after 24 hours. Audio is not stored.
             </p>
           )}
-          <label className="block text-sm font-semibold text-ink" htmlFor="audio">Interview audio</label>
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-es">{startWithSample ? "Your interview" : "Step 1 · Start here"}</p>
+          <label className="mt-2 block text-sm font-semibold text-ink" htmlFor="audio">Interview audio</label>
           <p className="mt-1 text-xs leading-relaxed text-ink-faint">
             MP3, M4A, MP4, WAV, OGG or FLAC · up to {me.limits.maxFileMb} MB and {me.limits.maxDurationMin} minutes. We transcribe — we don&apos;t translate your Spanish into English. Audio isn&apos;t stored.
           </p>
@@ -256,7 +248,7 @@ export function TranscribeApp({ introTop, introBody, notice }: { introTop?: Reac
                 {me.transcripts.filter((t) => t.status === "done").map((t) => (
                   <li key={t.id} className="flex items-baseline justify-between gap-3">
                     <button onClick={() => open(t.id)} className="truncate text-left font-medium text-accent underline decoration-accent/25 underline-offset-4 hover:decoration-accent">{t.filename}</button>
-                    <span className="shrink-0 font-mono text-xs text-ink-faint"> · {minutes(t.duration_sec)}</span>
+                    <span className="shrink-0 font-mono text-xs text-ink-faint"> · {durationLabel(t.duration_sec)}</span>
                   </li>
                 ))}
               </ul>
@@ -269,8 +261,6 @@ export function TranscribeApp({ introTop, introBody, notice }: { introTop?: Reac
     </div>
   );
 
-  const btn = "rounded-md border border-rule-strong bg-surface px-3 py-1.5 text-[13px] font-medium text-ink transition-colors hover:border-ink/40 hover:bg-paper disabled:opacity-50";
-
   return (
     <div>
       {notice ? (
@@ -278,94 +268,45 @@ export function TranscribeApp({ introTop, introBody, notice }: { introTop?: Reac
           {notice}
         </p>
       ) : null}
-      <div className="grid gap-x-12 gap-y-6 [grid-template-areas:'top'_'tool'_'body'] lg:grid-cols-[minmax(0,1fr)_420px] lg:grid-rows-[auto_1fr] lg:[grid-template-areas:'top_tool'_'body_tool']">
-        <div className="[grid-area:top]">{introTop}</div>
-        <div className="[grid-area:tool]">{toolColumn}</div>
-        {introBody ? <div className="[grid-area:body]">{introBody}</div> : null}
+      {startWithSample && introTop ? <div className="mb-5">{introTop}</div> : null}
+      {startWithSample ? (
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="order-2 lg:order-1">
+            {transcript ? (
+              <TranscriptView
+                transcript={transcript}
+                busy={busy}
+                persist={!isSample}
+                flushTop
+                onTranslate={() => void translate()}
+                onDelete={() => void remove()}
+                onChange={setTranscript}
+              />
+            ) : null}
+          </div>
+          <div className="order-1 lg:order-2 lg:sticky lg:top-20">{toolColumn}</div>
+        </div>
+      ) : null}
+
+      <div className={startWithSample
+        ? "mt-12"
+        : "grid items-start gap-x-10 gap-y-8 [grid-template-areas:'top'_'guide'_'tool'] lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-y-12 lg:[grid-template-areas:'top_tool'_'guide_guide']"}>
+        {startWithSample ? null : <div className="[grid-area:top]">{introTop}</div>}
+        <div className={startWithSample ? undefined : "[grid-area:guide]"}>
+          <DeskGuide sampleOpen={isSample} />
+        </div>
+        {startWithSample ? null : <div className="[grid-area:tool] lg:sticky lg:top-20">{toolColumn}</div>}
       </div>
 
-      {transcript && (
-        <section className="mt-10 overflow-clip rounded-xl border border-rule bg-surface shadow-[0_1px_2px_rgba(16,24,40,0.04),0_12px_32px_-16px_rgba(16,24,40,0.16)]" aria-label="Transcript">
-          <div className="z-10 border-b md:sticky md:top-14 border-rule bg-surface/95 px-4 py-4 backdrop-blur sm:px-8 sm:py-5">
-            <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-              <div className="min-w-0">
-                <h2 className="truncate text-2xl leading-tight">{transcript.filename}</h2>
-                <p className="mt-1 font-mono text-[11.5px] text-ink-faint">
-                  {minutes(transcript.durationSec)} · {transcript.segments.length} segments · {switches.size} language switches ·{" "}
-                  <span className="rounded-sm bg-mark/60 px-1 font-sans font-medium text-ink">AI draft — verify quotes before publishing</span>
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button onClick={translate} disabled={busy !== "" || Boolean(transcript.translation)} className="rounded-md border border-accent bg-accent-tint px-3 py-1.5 text-[13px] font-medium text-accent transition-colors hover:bg-accent hover:text-white disabled:opacity-60 disabled:hover:bg-accent-tint disabled:hover:text-accent">
-                  {busy === "translate" ? "Translating…" : transcript.translation ? "English shown" : "Translate to English"}
-                </button>
-                <span className="inline-flex overflow-hidden rounded-md border border-rule-strong [&>button]:rounded-none [&>button]:border-0 [&>button+button]:border-l [&>button+button]:border-rule-strong">
-                  <button onClick={() => download(`${base}.txt`, toTxt(transcript), "text/plain")} className={btn}>TXT</button>
-                  <button onClick={() => download(`${base}.srt`, toSrt(transcript), "application/x-subrip")} className={btn}>SRT</button>
-                  <button onClick={() => download(`${base}.json`, toJson(transcript), "application/json")} className={btn}>JSON</button>
-                  <button onClick={() => download(`${base}.docx`, toDocx(transcript) as BlobPart, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")} className={btn}>DOCX</button>
-                </span>
-                <button onClick={remove} className="rounded-md px-2.5 py-1.5 text-[13px] font-medium text-red-700 hover:bg-red-50">Delete</button>
-              </div>
-            </div>
-            <p className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-soft">
-              <span className="inline-flex items-center gap-1.5"><span className="lang-es px-1 font-display text-sm">Spanish</span></span>
-              <span className="inline-flex items-center gap-1.5"><span className="px-1 font-display text-sm text-ink">English</span></span>
-              <span className="inline-flex items-center gap-1.5"><span className="switch-tag !text-[10.5px]"><SwitchArrows /><span className="sr-only">⇄</span> switch</span> first word after a language change</span>
-            </p>
-          </div>
-
-          <ol className="divide-y divide-rule">
-            {transcript.segments.map((s, si) => (
-              <li key={si} className={`grid gap-x-8 gap-y-1.5 px-4 py-5 sm:px-8 ${transcript.translation ? "md:grid-cols-[150px_minmax(0,1fr)_minmax(0,0.8fr)]" : "md:grid-cols-[150px_minmax(0,1fr)]"}`}>
-                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-soft md:flex-col md:items-start md:pt-1.5">
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
-                    <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.speaker % 2 ? "border-2 border-ink" : "bg-ink"}`} aria-hidden="true" />
-                    {speakerLabel(s.speaker)}
-                  </span>
-                  <span className="font-mono text-[11.5px] text-ink-faint">{clock(s.start)}</span>
-                  <span
-                    className={`rounded-sm px-1.5 py-px font-mono text-[10.5px] font-semibold uppercase tracking-wider ${
-                      s.lang === "es" ? "bg-es-tint text-es ring-1 ring-es-line/40" : s.lang === "en" ? "bg-en-tint text-en ring-1 ring-en/30" : s.lang === "mixed" ? "text-ink ring-1 ring-ink/30 [background:linear-gradient(90deg,var(--es-tint)_50%,var(--en-tint)_50%)]" : "bg-paper text-ink-faint ring-1 ring-rule"
-                    }`}
-                  >
-                    {s.lang}
-                  </span>
-                </p>
-                <p className="font-display text-[18px] leading-[1.75] text-ink sm:text-[19px]" data-testid="segment">
-                  {s.words.map((w, wi) => {
-                    const sw = switches.has(`${si}:${wi}`);
-                    const prevEs = wi > 0 && s.words[wi - 1].lang === "es" && w.lang === "es" && !sw;
-                    return (
-                      <span key={wi}>
-                        {wi ? <span className={prevEs ? "lang-es" : undefined}> </span> : null}
-                        {sw ? <span className="switch-tag" aria-hidden="true"><SwitchArrows />{w.lang === "es" ? "ES" : "EN"}</span> : null}
-                        <span
-                          className={[w.lang === "es" ? "lang-es" : "", sw ? "switch-word" : ""].join(" ").trim() || undefined}
-                          data-lang={w.lang}
-                          data-switch={sw ? "1" : undefined}
-                          title={sw ? `Switch to ${w.lang === "es" ? "Spanish" : "English"}` : undefined}
-                        >
-                          <span className="sr-only">{sw ? "⇄ " : ""}</span>
-                          {w.w}
-                        </span>
-                      </span>
-                    );
-                  })}
-                </p>
-                {transcript.translation && (
-                  <p className="border-rule text-[15px] italic leading-relaxed text-ink-soft md:border-l md:pl-6" aria-label="English reference">
-                    <span className="not-italic font-mono text-[10.5px] font-medium uppercase tracking-wider text-ink-faint">EN reference · </span>
-                    {transcript.translation[si] || <span className="text-ink-faint">—</span>}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ol>
-          {transcript.segments.length === 0 && <p className="px-8 py-6 text-sm text-ink-faint">No speech found in this file.</p>}
-          <p className="sr-only">{transcript.segments.map(segmentText).join(" ")}</p>
-        </section>
-      )}
+      {!startWithSample && transcript ? (
+        <TranscriptView
+          transcript={transcript}
+          busy={busy}
+          onTranslate={() => void translate()}
+          onDelete={() => void remove()}
+          onChange={setTranscript}
+        />
+      ) : null}
     </div>
   );
 }

@@ -46,16 +46,10 @@ export default function ForJournalistsPage() {
         {site.phrases.transcribe} · {site.phrases.quoteReady}
       </p>
 
-      <div className="mt-6 flex flex-wrap gap-4">
-        <Link
-          href="/#waitlist"
-          className="rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-strong"
-        >
-          Join waitlist
-        </Link>
+      <div className="mt-6">
         <Link
           href="/transcribe-spanish-english-interview"
-          className="text-sm font-medium text-accent hover:text-accent-strong self-center"
+          className="text-sm font-medium text-accent hover:text-accent-strong"
         >
           Spanish–English interview workflow →
         </Link>

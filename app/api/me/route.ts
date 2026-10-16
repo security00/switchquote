@@ -4,7 +4,7 @@ import { accessForUser } from "@/lib/access";
 import { creditsFromUnits } from "@/lib/credit-units";
 import { balanceUnits, ensureSignupGrant, ensureSubscriptionGrants } from "@/lib/credits";
 import { smokeListUserId } from "@/lib/smoke";
-import { userEmail } from "@/lib/users";
+import { userAccount } from "@/lib/users";
 import { fail, json, sessionUserId } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +40,7 @@ export async function GET(req: Request) {
     await ensureSignupGrant(env, userId);
     await ensureSubscriptionGrants(env.DB, userId);
   }
+  const account = await userAccount(env.DB, userId);
   const recent = await env.DB
     .prepare(`SELECT id, filename, duration_sec, status, created_at FROM transcripts WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`)
     .bind(userId)
@@ -47,7 +48,9 @@ export async function GET(req: Request) {
   return json({
     ...base,
     signedIn: true,
-    email: await userEmail(env.DB, userId),
+    email: account?.email ?? null,
+    name: account?.name ?? null,
+    image: account?.image ?? null,
     access,
     creditsLeft: Math.max(0, creditsFromUnits(await balanceUnits(env.DB, userId))),
     transcripts: recent.results || [],

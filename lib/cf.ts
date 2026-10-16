@@ -1,3 +1,5 @@
+import { fillEnvFromFile } from "./env-file";
+
 export type AppEnv = {
   DB: D1Database;
   EMAIL?: SendEmail;
@@ -71,7 +73,7 @@ export async function getEnv(): Promise<AppEnv | null> {
     const { getCloudflareContext } = await import("@opennextjs/cloudflare");
     const { env } = await getCloudflareContext({ async: true });
     const typed = env as unknown as AppEnv;
-    if (typed?.DB) return typed;
+    if (typed?.DB) return fillEnvFromFile(typed, process.env);
   } catch {
     // next build without bindings
   }

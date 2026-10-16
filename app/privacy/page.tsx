@@ -3,7 +3,7 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy",
-  description: "How SwitchQuote handles waitlist signups, Google sign-in, interview audio and transcripts.",
+  description: "How SwitchQuote handles Google sign-in, interview audio and transcripts.",
 };
 
 const P = ({ children }: { children: React.ReactNode }) => <p className="mt-4 text-ink-soft leading-relaxed">{children}</p>;
@@ -14,8 +14,7 @@ export default function PrivacyPage() {
       <h1 className="text-3xl font-semibold text-ink">Privacy</h1>
       <h2 className="mt-8 text-lg font-semibold text-ink">What we collect</h2>
       <P>
-        Waitlist: email, role, whether you run bilingual interviews, and a timestamp. Sign-in: your Google
-        account email, name and profile picture. Transcription: the transcripts you create, the file name and
+        Earlier signup forms stored an email, a role, whether you run bilingual interviews, and a timestamp. Sign-in: your Google account email, name and profile picture. Transcription: the transcripts you create, the file name and
         length, and usage records needed to run credits and abuse limits. If you buy credits, Stripe processes the payment.
       </P>
       <h2 className="mt-8 text-lg font-semibold text-ink">Your audio</h2>

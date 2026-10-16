@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -56,16 +55,9 @@ export default function HowItWorksPage() {
         <p className="font-medium text-ink">{site.phrases.notMeetingNotes}</p>
         <p className="mt-2 text-sm text-ink-soft">
           No auto-translate to English-only. No “summary of key decisions.”
-          Transcription is in a private test; everyone else can join the waitlist.
+          Transcription is in a private test. Uploads are invite-only.
         </p>
       </div>
-
-      <Link
-        href="/#waitlist"
-        className="mt-8 inline-flex font-medium text-accent hover:text-accent-strong"
-      >
-        Join the waitlist →
-      </Link>
     </div>
   );
 }

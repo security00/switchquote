@@ -22,3 +22,10 @@ export async function userEmail(db: D1Database, userId: string): Promise<string 
   const row = await db.prepare(`SELECT email FROM users WHERE id = ?`).bind(userId).first<{ email: string }>();
   return row?.email ?? null;
 }
+
+export async function userAccount(db: D1Database, userId: string): Promise<{ email: string; name: string | null; image: string | null } | null> {
+  return db
+    .prepare(`SELECT email, name, image FROM users WHERE id = ?`)
+    .bind(userId)
+    .first<{ email: string; name: string | null; image: string | null }>();
+}

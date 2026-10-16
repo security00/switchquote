@@ -19,11 +19,23 @@ import { priceIdForSku, resolveSku } from "./stripe-catalog";
 const API_VERSION = "2026-09-30.endive";
 const GRANT_REASONS = new Set(["subscription_create", "subscription_cycle", "subscription"]);
 
+/**
+ * Next dev replaces global fetch with the edge implementation. That fetch rejects
+ * Stripe's Content-Length and a POST body that has no duplex setting.
+ */
+function stripeFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  headers.delete("content-length");
+  const next: RequestInit & { duplex?: "half" } = { ...init, headers };
+  if (init?.body != null) next.duplex = "half";
+  return fetch(input, next);
+}
+
 export function stripeClient(secretKey: string): Stripe {
   return new Stripe(secretKey, {
     apiVersion: API_VERSION,
     typescript: true,
-    httpClient: Stripe.createFetchHttpClient(),
+    httpClient: Stripe.createFetchHttpClient(stripeFetch),
   });
 }
 

@@ -1,0 +1,27 @@
+# SwitchQuote
+
+> Quote-ready Spanish–English interview transcripts. SwitchQuote keeps both languages as spoken. It is not a meeting-notes product, and it does not replace the original words with an English translation.
+
+SwitchQuote is in a private test for journalists who need pull quotes from bilingual interviews. The transcript keeps speaker names, timecodes, and the Spanish and English the source said, including a switch in the middle of a sentence. Optional English translation sits beside the original and does not replace it. That translation runs only when someone clicks Translate to English.
+
+A visitor can rename a speaker, correct a word, and copy a quote on the built-in sample without an account or an upload. Transcribing a file of your own requires Google sign-in, and the account has to be on the private-test list. Allowlisted accounts can buy credits. A credit is spent when a transcription starts and is returned if that transcription fails. New allowlisted accounts receive a signup grant; the current amount is on the pricing page.
+
+Audio is sent to Deepgram to make the transcript and is not stored by SwitchQuote. SwitchQuote does not use audio or transcripts to train models. Transcripts are kept for 30 days, or until the account holder deletes them. The service is not end-to-end encrypted. Google handles sign-in. Stripe processes payments. Cloudflare hosts the app. SwitchQuote does not sell this data.
+
+Transcripts are AI drafts. Verify every quote before publishing. Sample panels on the samples page are fictional illustrations, not output from a live upload. SwitchQuote does not offer anonymous free transcription minutes.
+
+## Start here
+
+- [Home](https://switchquote.potter-faa.workers.dev/): Sample transcript open on arrival, plus upload for a signed-in account.
+- [Upload](https://switchquote.potter-faa.workers.dev/app): Sign in with Google and transcribe an interview file you control.
+- [How it works](https://switchquote.potter-faa.workers.dev/how-it-works): Transcribe, don't translate, and the three desk steps.
+- [For journalists](https://switchquote.potter-faa.workers.dev/for-journalists): Deadlines, attribution, and checking a quote.
+- [Pricing](https://switchquote.potter-faa.workers.dev/pricing): Starter, Pro, and Studio plans, plus one-time credit packs, for allowlisted accounts.
+
+## Optional
+
+- [Spanish–English interviews](https://switchquote.potter-faa.workers.dev/transcribe-spanish-english-interview): Why a bilingual interview should stay transcribed instead of collapsed into one language.
+- [Otter alternative for journalists](https://switchquote.potter-faa.workers.dev/otter-alternative-for-journalists): Meeting-note tools are a different job from an on-the-record interview. This page does not claim Otter is a bad product.
+- [Samples](https://switchquote.potter-faa.workers.dev/samples): Illustrative before/after panels. Not from a live upload.
+- [Privacy](https://switchquote.potter-faa.workers.dev/privacy): What is collected, where audio goes, and how long transcripts are kept.
+- [Terms](https://switchquote.potter-faa.workers.dev/terms): Private test, credits, and the duty to verify quotes before publishing.

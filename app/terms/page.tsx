@@ -25,9 +25,6 @@ export default function TermsPage() {
         By uploading you confirm you have the right to the recording and your interviewees&apos; consent. Don&apos;t
         upload content you aren&apos;t allowed to share with our processors (see Privacy).
       </P>
-      <P>
-        By joining the waitlist you confirm the email is yours and agree to receive product updates about {site.name}.
-      </P>
     </div>
   );
 }

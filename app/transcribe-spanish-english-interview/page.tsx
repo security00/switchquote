@@ -36,7 +36,7 @@ export default function TranscribeSpanishEnglishPage() {
         Start from transcription, not translation. Mark speakers. Keep code
         switches intact. Export something you can quote-check before deadline.
         That is the workflow {site.name} is building. Transcription is in a
-        private test now; join the waitlist to get access.
+        private test now.
       </p>
 
       <Link
@@ -44,13 +44,6 @@ export default function TranscribeSpanishEnglishPage() {
         className="mt-6 inline-flex font-medium text-accent hover:text-accent-strong"
       >
         View sample panels →
-      </Link>
-      <br />
-      <Link
-        href="/#waitlist"
-        className="mt-4 inline-flex font-medium text-accent hover:text-accent-strong"
-      >
-        Join the waitlist →
       </Link>
     </article>
   );

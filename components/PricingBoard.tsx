@@ -84,17 +84,11 @@ export function PricingBoard({ canceled }: { canceled: boolean }) {
         </div>
       </div>
 
-      {me?.signedIn && (
+      {me?.signedIn && me.access !== "waitlist" && typeof me.creditsLeft === "number" ? (
         <p className="mt-4 text-sm text-ink-soft">
-          Signed in as <strong className="font-medium text-ink">{me.email}</strong>
-          {me.access !== "waitlist" && typeof me.creditsLeft === "number" ? (
-            <>
-              {" "}
-              · Credits left: <strong className="font-medium text-ink">{formatCreditAmount(me.creditsLeft)}</strong>
-            </>
-          ) : null}
+          Credits left: <strong className="font-medium text-ink">{formatCreditAmount(me.creditsLeft)}</strong>
         </p>
-      )}
+      ) : null}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         {PLANS.map((plan) => {

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -52,13 +51,6 @@ export default function OtterAlternativePage() {
         We are not claiming Otter is “bad”—it is the wrong shape for many
         bilingual interview workflows.
       </p>
-
-      <Link
-        href="/#waitlist"
-        className="mt-8 inline-flex font-medium text-accent hover:text-accent-strong"
-      >
-        Join the SwitchQuote waitlist →
-      </Link>
     </article>
   );
 }

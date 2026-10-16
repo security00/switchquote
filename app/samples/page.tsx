@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { TranscriptPanel } from "@/components/TranscriptPanel";
 import { site } from "@/lib/site";
 
@@ -79,12 +78,6 @@ export default function SamplesPage() {
       <p className="mt-10 text-sm text-ink-faint">
         {site.phrases.transcribe} · {site.phrases.quoteReady}
       </p>
-      <Link
-        href="/#waitlist"
-        className="mt-4 inline-flex font-medium text-accent hover:text-accent-strong"
-      >
-        Join the waitlist →
-      </Link>
     </div>
   );
 }

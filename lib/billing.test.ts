@@ -287,11 +287,17 @@ test("subscription.updated does not mint credits; invoice.paid and yearly backfi
     lines: { data: [{ period: { start: JAN15, end: NEXT_JAN }, pricing: { price_details: { price: "price_1UOb1e2eJNPpLqReb17osn9I" } }, parent: { subscription_item_details: { proration: false } } }] },
   };
   await handleStripeEvent(env, event("evt_year", "invoice.paid", invoice), stripeApi(subscription));
-  assert.equal(await balanceUnits(db, "user_1", OCT9), 10 * 150 * UNITS_PER_CREDIT);
+  // The webhook grants through the real clock, one month at a time, so the count follows today's month.
+  const minted = dueSubscriptionMonths(
+    { id: "sub_year", status: "active", interval: "year", creditsPerMonth: 150, periodStart: JAN15, periodEnd: NEXT_JAN, grantsEnabled: true },
+    Math.floor(Date.now() / 1000)
+  );
+  assert.ok(minted.length >= 1);
+  assert.equal(await balanceUnits(db, "user_1", OCT9), minted.length * 150 * UNITS_PER_CREDIT);
   assert.equal(await ensureSubscriptionGrants(db, "user_1", OCT9), 0);
 
   await handleStripeEvent(env, event("evt_live", "invoice.paid", { ...invoice, livemode: true }, true), stripeApi(subscription));
-  assert.equal(await balanceUnits(db, "user_1", OCT9), 10 * 150 * UNITS_PER_CREDIT);
+  assert.equal(await balanceUnits(db, "user_1", OCT9), minted.length * 150 * UNITS_PER_CREDIT);
 });
 
 test("an unpaid checkout does not enable subscription grants", async () => {

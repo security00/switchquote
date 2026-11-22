@@ -9,13 +9,13 @@ const LIST_USD_PER_MIN = 0.0052;
 export const deepgram: EngineAdapter = {
   id: "deepgram",
   label: "Deepgram Nova-3 (multi)",
-  caps: { diarization: true, wordTimestamps: true, languageTags: "word", note: "Per-word language from language=multi; diarization + utterances." },
+  caps: { diarization: true, wordTimestamps: true, languageTags: "word", note: "Word times and diarization. language=multi tags are not used for switch detection; the lexical tagger assigns language." },
   priceSource: "https://deepgram.com/pricing",
   model: (env) => (env.DEEPGRAM_MODEL ?? "").trim() || "nova-3",
   route: () => "direct",
   requiredKeys: () => ["DEEPGRAM_API_KEY"],
   listUsdPerMin: () => LIST_USD_PER_MIN,
-  async transcribe({ audio, mime, detectedSec, env, fetchImpl = fetch }) {
+  async transcribe({ audio, mime, detectedSec, env, fetchImpl = fetch, signal }) {
     const model = deepgram.model(env);
     const params = new URLSearchParams({ model, language: "multi", diarize: "true", smart_format: "true", punctuate: "true", utterances: "true" });
     try {
@@ -23,6 +23,7 @@ export const deepgram: EngineAdapter = {
         method: "POST",
         headers: { Authorization: `Token ${env.DEEPGRAM_API_KEY}`, "Content-Type": mime },
         body: audio,
+        signal,
       });
       if (!res.ok) return { ok: false, httpStatus: res.status, error: await readError(res, "Deepgram"), cost: null };
       const body = (await res.json()) as DeepgramResponse;

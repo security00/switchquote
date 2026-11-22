@@ -1,8 +1,8 @@
 import { Buffer } from "node:buffer";
 import type { Lang, Segment, Word } from "../transcript";
-import { dominant } from "../transcript";
+import { clampConfidence, dominant } from "../transcript";
 
-export type RawWord = { w: string; start: number; end: number; speaker: number; lang?: Lang };
+export type RawWord = { w: string; start: number; end: number; speaker: number; lang?: Lang; confidence?: number };
 
 /** Group words into segments on speaker change or a pause of at least `gapSec`. */
 export function groupWords(words: RawWord[], gapSec = 1.5): Segment[] {
@@ -11,6 +11,8 @@ export function groupWords(words: RawWord[], gapSec = 1.5): Segment[] {
     const text = rw.w.trim();
     if (!text) continue;
     const word: Word = { w: text, lang: rw.lang ?? "other", start: rw.start, end: rw.end };
+    const confidence = clampConfidence(rw.confidence);
+    if (confidence !== undefined) word.confidence = confidence;
     const last = segments[segments.length - 1];
     if (last && last.speaker === rw.speaker && word.start - last.end < gapSec) {
       last.words.push(word);

@@ -70,6 +70,22 @@ export function isAdmin(env: Partial<AppEnv>, email: string | null | undefined):
 
 export type EngineChoice = { ok: true; engine: EngineAdapter; overridden: boolean } | { ok: false; status: number; code: string; error: string };
 
+/**
+ * When both AssemblyAI and Deepgram are configured, AssemblyAI is the transcript.
+ * A 2026-11-23 smoke test found Deepgram nova-3 `language=multi` tagged an entire
+ * Spanish–English clip as Spanish, while AssemblyAI kept more of the switches.
+ * An admin's explicit `x-sq-engine` override is left alone.
+ */
+export function bilingualPrimary(env: Partial<AppEnv>, choice: EngineChoice, requested?: string | null): EngineChoice {
+  if (!choice.ok || choice.overridden || (requested ?? "").trim()) return choice;
+  const assembly = getEngine("assemblyai");
+  const deepgramEngine = getEngine("deepgram");
+  if (!assembly || !deepgramEngine) return choice;
+  if (!engineStatus(env, assembly).enabled || !engineStatus(env, deepgramEngine).enabled) return choice;
+  if (choice.engine.id === "assemblyai") return choice;
+  return { ok: true, engine: assembly, overridden: false };
+}
+
 /** Pick the engine for one request: config default, or an admin's explicit override. */
 export function chooseEngine(env: Partial<AppEnv>, email: string | null, override: string | null | undefined): EngineChoice {
   const requested = (override ?? "").trim().toLowerCase();

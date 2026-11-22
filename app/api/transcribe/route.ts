@@ -5,8 +5,10 @@ import { detectDuration, MIME_BY_FORMAT } from "@/lib/duration";
 import { creditsFromUnits, billableUnits } from "@/lib/credit-units";
 import { balanceUnits, chargeCredits, ensureSignupGrant, ensureSubscriptionGrants, refundCredits } from "@/lib/credits";
 import { BUSY_MESSAGE, USER_LIMIT_MESSAGE, checkAdmission, recordSubmission, settle } from "@/lib/spend";
-import { chooseEngine } from "@/lib/engines/registry";
-import { tagEstimateUsd, tagLanguages } from "@/lib/langtag";
+import { bilingualPrimary, chooseEngine, getEngine } from "@/lib/engines/registry";
+import { tagEstimateUsd } from "@/lib/langtag";
+import { chooseVerifyMode, verifySwitchTranscript } from "@/lib/switch-verify";
+import { flagLowConfidence, languagesForSwitches, switchWindows } from "@/lib/switch-points";
 import { SMOKE_IP_LIMIT_MESSAGE, actorForRequest, reserveSmokeRequest } from "@/lib/smoke";
 import { fail, json, sessionUserId } from "@/lib/http";
 
@@ -15,8 +17,11 @@ export const dynamic = "force-dynamic";
 const TRANSCRIPT_TTL_SECONDS = 30 * 24 * 3600;
 
 /**
- * Upload → configured engine (default Deepgram Nova-3 multi; see lib/engines) → transcript that keeps
- * both languages; engines without per-word language get the fallback switch detector (lib/langtag.ts).
+ * Upload → speech engine. When both AssemblyAI and Deepgram keys exist, AssemblyAI is the transcript
+ * and Deepgram is only a cross-check. Deepgram language tags are not used for switches; language comes
+ * from the lexical tagger (lib/langtag.ts) unless another engine already returned both languages.
+ * Disagreement and low confidence are marked Review suggested. An LLM may attach a one-token suggestion
+ * the reader accepts; it does not change the words. Missing keys skip that pass. The transcript still saves.
  * Gate order: sign-in, or SMOKE_ANON for signed-out browsers (401) → allowlist for signed-in users (403)
  * → Turnstile (403) → size/format/duration (413/415) → engine choice (admin-only override, 403/503)
  * → credits for signed-in users (402) → USD breakers (503 / 429) → smoke IP/day cap (429) → paid call(s).
@@ -65,7 +70,8 @@ export async function POST(req: Request) {
     return withCookie({ ok: false, code: "too_long", error: `Recordings up to ${Math.round(c.maxDurationSec / 60)} minutes for now.` }, 413);
   }
 
-  const choice = chooseEngine(env, actor.email, req.headers.get("x-sq-engine"));
+  const requestedEngine = req.headers.get("x-sq-engine");
+  const choice = bilingualPrimary(env, chooseEngine(env, actor.email, requestedEngine), requestedEngine);
   if (!choice.ok) return withCookie({ ok: false, code: choice.code, error: choice.error }, choice.status);
   const engine = choice.engine;
   if (engine.maxBytes && file.size > engine.maxBytes) {
@@ -82,10 +88,23 @@ export async function POST(req: Request) {
     }
   }
 
-  const needsTagger = engine.caps.languageTags === "none" && c.langTagger === "llm" && Boolean(env.OPENROUTER_API_KEY);
   const sttEstimateUsd = (units / 60) * engine.listUsdPerMin(env);
-  const tagEstimate = needsTagger ? tagEstimateUsd(units) : 0;
-  const admission = await checkAdmission(env, actor.spendUserId, sttEstimateUsd + tagEstimate);
+  const tagEstimate = 0;
+  const verifyPlan = chooseVerifyMode(env, engine.id);
+  const secondaryEngine = verifyPlan.secondaryId ? getEngine(verifyPlan.secondaryId) : undefined;
+  const verifyEstimate =
+    verifyPlan.mode === "cross" && secondaryEngine
+      ? (units / 60) * secondaryEngine.listUsdPerMin(env)
+      : verifyPlan.mode === "llm"
+        ? Math.min(0.02, tagEstimateUsd(units))
+        : 0;
+  let runVerify = verifyPlan.mode !== "skip" && verifyEstimate > 0;
+  const baseEstimate = sttEstimateUsd + tagEstimate;
+  let admission = await checkAdmission(env, actor.spendUserId, baseEstimate + (runVerify ? verifyEstimate : 0), undefined, runVerify);
+  if (!admission.ok && runVerify) {
+    runVerify = false;
+    admission = await checkAdmission(env, actor.spendUserId, baseEstimate);
+  }
   if (!admission.ok) {
     return admission.scope === "global"
       ? withCookie({ ok: false, code: "paused", error: BUSY_MESSAGE }, 503)
@@ -141,26 +160,100 @@ export async function POST(req: Request) {
   }
   await settle(env, sttEvent, { status: "ok", httpStatus: result.httpStatus, actualUsd: result.cost.usd, costSource: result.cost.source, audioSeconds: result.durationSec, model: result.model });
 
-  let segments = result.segments;
-  let langTags: string = result.languageTags;
-  if (result.languageTags === "none") {
-    // Fallback switch detector so highlights work on engines without per-word language.
-    const tagEvent = needsTagger
-      ? await recordSubmission(env, { userId: actor.spendUserId, email: actor.email, kind: "tag", engine: "langtag", provider: "openrouter", model: c.langTaggerModel, ref: id, audioSeconds: result.durationSec, estimateUsd: tagEstimate })
-      : null;
-    const tagged = await tagLanguages(segments, { mode: needsTagger ? "llm" : c.langTagger === "off" ? "off" : "heuristic", apiKey: env.OPENROUTER_API_KEY, model: c.langTaggerModel, referer });
-    if (tagEvent) {
-      await settle(env, tagEvent, {
-        status: tagged.method === "heuristic" ? "failed" : "ok",
-        httpStatus: tagged.httpStatus,
-        // No cost reported (call never reached the model) → nothing was charged.
-        actualUsd: tagged.cost?.usd ?? (tagged.httpStatus && tagged.httpStatus < 300 ? null : 0),
-        costSource: tagged.cost?.source ?? "estimate",
+  const labeled = languagesForSwitches(result.segments, engine.id);
+  let segments = flagLowConfidence(labeled.segments);
+  let langTags = labeled.method === "lexical" ? "lexical" : result.languageTags;
+  if (runVerify && switchWindows(segments).length) {
+    try {
+      const verified = await verifySwitchTranscript(segments, {
+        crossCheck:
+          verifyPlan.mode === "cross" && secondaryEngine
+            ? async () => {
+                const estimate = (result.durationSec / 60) * secondaryEngine.listUsdPerMin(env);
+                const eventId = await recordSubmission(env, {
+                  userId: actor.spendUserId,
+                  email: actor.email,
+                  kind: "stt",
+                  engine: secondaryEngine.id,
+                  provider: `${secondaryEngine.id}:${secondaryEngine.route(env)}:verify`,
+                  model: secondaryEngine.model(env),
+                  ref: id,
+                  audioSeconds: result.durationSec,
+                  estimateUsd: estimate,
+                });
+                const ac = new AbortController();
+                const timer = setTimeout(() => ac.abort(), 20_000);
+                try {
+                  const second = await secondaryEngine.transcribe({
+                    audio,
+                    mime: MIME_BY_FORMAT[detected.format],
+                    format: detected.format,
+                    detectedSec: detected.seconds,
+                    env,
+                    referer,
+                    signal: ac.signal,
+                  });
+                  await settle(env, eventId, {
+                    status: second.ok ? "ok" : "failed",
+                    httpStatus: second.httpStatus,
+                    actualUsd: second.ok ? second.cost.usd : (second.cost?.usd ?? null),
+                    costSource: second.ok ? second.cost.source : (second.cost?.source ?? "estimate"),
+                    audioSeconds: second.ok ? second.durationSec : null,
+                    model: second.ok ? second.model : null,
+                  });
+                  return second.ok ? languagesForSwitches(second.segments, secondaryEngine.id).segments : null;
+                } catch (e) {
+                  await settle(env, eventId, { status: "failed", httpStatus: null, actualUsd: null, costSource: "estimate" });
+                  console.error("[transcribe] verify cross-check", e instanceof Error ? e.message : e);
+                  return null;
+                } finally {
+                  clearTimeout(timer);
+                }
+              }
+            : undefined,
+        llm: verifyPlan.llm
+          ? {
+              provider: verifyPlan.llm,
+              apiKey: verifyPlan.llm === "openrouter" ? String(env.OPENROUTER_API_KEY) : String(env.GOOGLE_API_KEY),
+              model: verifyPlan.llm === "openrouter" ? c.langTaggerModel : (env.GEMINI_MODEL ?? "").trim() || "gemini-3.8-flash",
+              referer,
+            }
+          : null,
+        spendLlm: async (job) => {
+          const eventId = await recordSubmission(env, {
+            userId: actor.spendUserId,
+            email: actor.email,
+            kind: "tag",
+            engine: "switch-verify",
+            provider: verifyPlan.llm === "google" ? "google" : "openrouter",
+            model: verifyPlan.llm === "openrouter" ? c.langTaggerModel : (env.GEMINI_MODEL ?? "").trim() || "gemini-3.8-flash",
+            ref: id,
+            audioSeconds: result.durationSec,
+            estimateUsd: job.estimateUsd,
+          });
+          try {
+            const out = await job.run();
+            await settle(env, eventId, {
+              status: out.ok ? "ok" : "failed",
+              httpStatus: out.httpStatus,
+              actualUsd: out.cost?.usd ?? (out.ok ? null : 0),
+              costSource: out.cost?.source ?? "estimate",
+            });
+            return out;
+          } catch (e) {
+            await settle(env, eventId, { status: "failed", httpStatus: null, actualUsd: null, costSource: "estimate" });
+            throw e;
+          }
+        },
       });
+      if (verified.method !== "skipped") {
+        segments = verified.segments;
+        langTags = `${langTags}+verify:${verified.method}`;
+      }
+      if (verified.error) console.error("[transcribe] verify", verified.error);
+    } catch (e) {
+      console.error("[transcribe] verify", e instanceof Error ? e.message : e);
     }
-    if (tagged.error) console.error("[transcribe] tagger", tagged.error);
-    segments = tagged.segments;
-    langTags = `fallback:${tagged.method}`;
   }
   await env.DB.prepare(`UPDATE transcripts SET status = 'done', segments_json = ?, lang_tags = ? WHERE id = ?`).bind(JSON.stringify(segments), langTags, id).run();
   return withCookie({ ok: true, id, ...(choice.overridden ? { engine: engine.id, langTags } : {}) }, 200);

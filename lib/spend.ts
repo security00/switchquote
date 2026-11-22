@@ -33,12 +33,12 @@ export function admit(globalSpent: number, userSpent: number, estimate: number, 
   return { ok: true };
 }
 
-export async function checkAdmission(env: AppEnv, userId: string, estimateUsd: number, now = nowSeconds()): Promise<Admission> {
+export async function checkAdmission(env: AppEnv, userId: string, estimateUsd: number, now = nowSeconds(), silent = false): Promise<Admission> {
   const c = readConfig(env);
   const day = utcDay(now);
   const [g, u] = await Promise.all([spent(env.DB, globalKey(c.spendNamespace), day), spent(env.DB, userKey(c.spendNamespace, userId), day)]);
   const res = admit(g, u, toMicro(estimateUsd), toMicro(c.dailyLimitUsd), toMicro(c.userDailyLimitUsd));
-  if (!res.ok) {
+  if (!res.ok && !silent) {
     // A refused call is the moment a breaker is "tripped" for the operator; alert once per day.
     await maybeAlert(env, res.scope === "global" ? globalKey(c.spendNamespace) : userKey(c.spendNamespace, userId), day, res.scope, res.scope === "global" ? c.dailyLimitUsd : c.userDailyLimitUsd, now, true);
   }

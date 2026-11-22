@@ -18,6 +18,8 @@ export const navLinks = [
   { href: "/samples", label: "Samples" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-journalists", label: "For journalists" },
+  { href: "/spanglish-transcription", label: "Spanglish" },
+  { href: "/vs/sonix", label: "Vs Sonix" },
 ] as const;
 
 export type WaitlistRole = "journalist" | "researcher" | "other";

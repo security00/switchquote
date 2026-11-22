@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { TrackedLink } from "@/components/TrackedLink";
+import { RateCalculator } from "@/components/RateCalculator";
+import { useSrc } from "@/components/useSrc";
 import { formatCreditAmount } from "@/lib/credit-units";
+import { hrefWithSrc } from "@/lib/src";
 import { PACKS, PLANS } from "@/lib/pricing";
 
 type Me = {
@@ -61,6 +65,7 @@ export function PricingBoard({ canceled }: { canceled: boolean }) {
 
   const canBuy = Boolean(me?.signedIn && me.access !== "waitlist" && me.googleConfigured && me.checkoutConfigured);
   const signup = me?.signupCredits ?? 20;
+  const storedSrc = useSrc();
 
   return (
     <div className="mt-10">
@@ -70,9 +75,20 @@ export function PricingBoard({ canceled }: { canceled: boolean }) {
         </p>
       )}
 
+      <article className="mb-8 rounded-xl border border-rule bg-mark/30 p-6">
+        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-brass">Free start</p>
+        <h2 className="mt-2 text-2xl">No credit card required</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-soft">
+          One-time signup grant: {signup} free credits ≈ {signup} minutes. Sign in with Google. SwitchQuote does not transcribe anonymously, and a card is not required to use that grant.
+        </p>
+        <TrackedLink href="/app" src="pricing-free" className="mt-4 inline-flex rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-strong">
+          Start with the free credits
+        </TrackedLink>
+      </article>
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <p className="max-w-xl text-sm leading-relaxed text-ink-soft">
-          New allowlisted accounts start with {signup} credits. Credits are used from that grant first, then the subscription allotment, then packs. Prices are USD. This test checkout does not add tax.
+          New allowlisted accounts start with {signup} credits. Credits are used from that grant first, then the subscription allotment, then packs. Prices are USD. This test checkout does not add tax. Pack credits last 24 months.
         </p>
         <div className="inline-flex rounded-md border border-rule-strong bg-surface p-1 text-sm font-medium" role="group" aria-label="Billing period">
           <button type="button" aria-pressed={!yearly} onClick={() => setYearly(false)} className={`rounded px-3 py-1.5 ${yearly ? "text-ink-soft" : "bg-accent text-white"}`}>
@@ -103,7 +119,7 @@ export function PricingBoard({ canceled }: { canceled: boolean }) {
               </p>
               <p className="mt-2 text-sm font-medium text-ink">{plan.credits} credits each month</p>
               <p className="mt-2 text-sm leading-relaxed text-ink-faint">{yearly ? "Billed once a year. The monthly credits still arrive one month at a time." : "Billed every month. Each paid invoice adds that month's credits."}</p>
-              <div className="mt-6">{buyButton(choice.sku, yearly ? "Subscribe yearly" : "Subscribe", canBuy, busy, me, loadFailed, () => checkout(choice.sku))}</div>
+              <div className="mt-6">{buyButton(choice.sku, yearly ? "Subscribe yearly" : "Subscribe", canBuy, busy, me, loadFailed, storedSrc, () => checkout(choice.sku))}</div>
             </article>
           );
         })}
@@ -120,10 +136,12 @@ export function PricingBoard({ canceled }: { canceled: boolean }) {
               <span className="font-sans text-base text-ink-faint"> once</span>
             </p>
             <p className="mt-2 text-sm font-medium text-ink">{pack.credits} credits</p>
-            <div className="mt-6">{buyButton(pack.sku, "Buy pack", canBuy, busy, me, loadFailed, () => checkout(pack.sku))}</div>
+            <div className="mt-6">{buyButton(pack.sku, "Buy pack", canBuy, busy, me, loadFailed, storedSrc, () => checkout(pack.sku))}</div>
           </article>
         ))}
       </div>
+
+      <RateCalculator />
 
       {error && (
         <p role="alert" className="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -132,7 +150,7 @@ export function PricingBoard({ canceled }: { canceled: boolean }) {
       )}
 
       <p className="mt-8 text-sm text-ink-soft">
-        <Link href="/app" className="font-medium text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent">
+        <Link href={hrefWithSrc("/app", storedSrc)} className="font-medium text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent">
           Back to the transcriber →
         </Link>
       </p>
@@ -140,7 +158,7 @@ export function PricingBoard({ canceled }: { canceled: boolean }) {
   );
 }
 
-function buyButton(sku: string, label: string, canBuy: boolean, busy: string, me: Me | null, loadFailed: boolean, onBuy: () => void) {
+function buyButton(sku: string, label: string, canBuy: boolean, busy: string, me: Me | null, loadFailed: boolean, storedSrc: string, onBuy: () => void) {
   if (!me) {
     return (
       <button type="button" disabled className="w-full rounded-md bg-rule-strong px-4 py-2.5 text-sm font-semibold text-white">
@@ -153,7 +171,7 @@ function buyButton(sku: string, label: string, canBuy: boolean, busy: string, me
   }
   if (!me.signedIn) {
     return (
-      <button type="button" onClick={() => signIn("google", { redirectTo: "/pricing" })} className="w-full rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-strong">
+      <button type="button" onClick={() => signIn("google", { redirectTo: hrefWithSrc("/pricing", storedSrc) })} className="w-full rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-strong">
         Sign in to buy
       </button>
     );

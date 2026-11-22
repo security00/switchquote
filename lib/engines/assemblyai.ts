@@ -8,7 +8,20 @@ import { countSpeakers, errText, finite, groupWords, readError, speakerIndexer }
 const LIST_USD_PER_MIN = (0.21 + 0.02) / 60;
 const API = "https://api.assemblyai.com/v2";
 
-type AaiWord = { text?: string; start?: number; end?: number; speaker?: string | null };
+function delay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    if (!signal) return;
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new Error("aborted"));
+    };
+    if (signal.aborted) onAbort();
+    else signal.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+type AaiWord = { text?: string; start?: number; end?: number; speaker?: string | null; confidence?: number };
 type AaiTranscript = { id?: string; status?: string; error?: string; audio_duration?: number; words?: AaiWord[] };
 
 export const assemblyai: EngineAdapter = {
@@ -26,15 +39,17 @@ export const assemblyai: EngineAdapter = {
   requiredKeys: () => ["ASSEMBLYAI_API_KEY"],
   listUsdPerMin: () => LIST_USD_PER_MIN,
   maxBytes: 200 * 1024 * 1024,
-  async transcribe({ audio, detectedSec, env, fetchImpl = fetch }) {
+  async transcribe({ audio, detectedSec, env, fetchImpl = fetch, signal }) {
     const model = assemblyai.model(env);
     const headers = { Authorization: String(env.ASSEMBLYAI_API_KEY) };
     const pollMs = Number(env.ASSEMBLYAI_POLL_MS || 3000);
+    const call = (url: string, init: RequestInit = {}) => fetchImpl(url, { ...init, signal });
     try {
-      const up = await fetchImpl(`${API}/upload`, { method: "POST", headers: { ...headers, "Content-Type": "application/octet-stream" }, body: audio });
+      if (signal?.aborted) return { ok: false, httpStatus: null, error: "aborted", cost: null };
+      const up = await call(`${API}/upload`, { method: "POST", headers: { ...headers, "Content-Type": "application/octet-stream" }, body: audio });
       if (!up.ok) return { ok: false, httpStatus: up.status, error: await readError(up, "AssemblyAI upload"), cost: null };
       const { upload_url } = (await up.json()) as { upload_url?: string };
-      const create = await fetchImpl(`${API}/transcript`, {
+      const create = await call(`${API}/transcript`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -51,19 +66,26 @@ export const assemblyai: EngineAdapter = {
       let t = (await create.json()) as AaiTranscript;
       const deadline = Date.now() + 12 * 60 * 1000;
       while (t.status !== "completed" && t.status !== "error" && Date.now() < deadline) {
-        await new Promise((r) => setTimeout(r, pollMs));
-        const poll = await fetchImpl(`${API}/transcript/${t.id}`, { headers });
+        if (signal?.aborted) return { ok: false, httpStatus: null, error: "aborted", cost: null };
+        await delay(pollMs, signal);
+        const poll = await call(`${API}/transcript/${t.id}`, { headers });
         if (!poll.ok) return { ok: false, httpStatus: poll.status, error: await readError(poll, "AssemblyAI poll"), cost: null };
         t = (await poll.json()) as AaiTranscript;
       }
       // Privacy: delete the provider-side transcript (and its uploaded audio) once we have it.
-      if (t.id) await fetchImpl(`${API}/transcript/${t.id}`, { method: "DELETE", headers }).catch(() => undefined);
+      if (t.id) await call(`${API}/transcript/${t.id}`, { method: "DELETE", headers }).catch(() => undefined);
       if (t.status !== "completed") {
         return { ok: false, httpStatus: 200, error: `AssemblyAI ${t.status || "timeout"}: ${String(t.error || "").slice(0, 200)}`, cost: null };
       }
       const speaker = speakerIndexer();
       const segments = groupWords(
-        (t.words || []).map((w) => ({ w: String(w.text || ""), start: Number(w.start || 0) / 1000, end: Number(w.end || 0) / 1000, speaker: speaker(w.speaker ?? "A") }))
+        (t.words || []).map((w) => ({
+          w: String(w.text || ""),
+          start: Number(w.start || 0) / 1000,
+          end: Number(w.end || 0) / 1000,
+          speaker: speaker(w.speaker ?? "A"),
+          ...(typeof w.confidence === "number" ? { confidence: w.confidence } : {}),
+        }))
       );
       const provided = finite(t.audio_duration);
       const durationSec = provided ?? detectedSec;

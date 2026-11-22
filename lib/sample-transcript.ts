@@ -16,10 +16,10 @@ export const sampleTranscript: Transcript = {
       end: 16,
       lang: "mixed",
       words: [
-        { w: "Pero", lang: "es", start: 12, end: 12.3 },
-        { w: "ellos", lang: "es", start: 12.3, end: 12.6 },
-        { w: "said", lang: "en", start: 12.6, end: 12.9 },
-        { w: "no.", lang: "en", start: 12.9, end: 13.2 },
+        { w: "Pero", lang: "es", start: 12, end: 12.3, confidence: 0.94 },
+        { w: "ellos", lang: "es", start: 12.3, end: 12.6, confidence: 0.9 },
+        { w: "said", lang: "en", start: 12.6, end: 12.9, confidence: 0.44 },
+        { w: "no.", lang: "en", start: 12.9, end: 13.2, confidence: 0.92 },
       ],
     },
     {
@@ -27,7 +27,7 @@ export const sampleTranscript: Transcript = {
       start: 16,
       end: 18,
       lang: "es",
-      words: [{ w: "¿Verdad?", lang: "es", start: 16, end: 16.6 }],
+      words: [{ w: "¿Verdad?", lang: "es", start: 16, end: 16.6, confidence: 0.86 }],
     },
   ],
 };

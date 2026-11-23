@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ENGINES, chooseEngine, engineStatus, getEngine, listEngines } from "./registry";
+import { ENGINES, bilingualPrimary, chooseEngine, engineStatus, getEngine, listEngines } from "./registry";
 import { segmentsFromGeminiJson } from "./gemini";
 import { segmentsFromPlainText, groupWords } from "./util";
 import type { AppEnv } from "../cf";
@@ -34,6 +34,16 @@ test("missing key → adapter listed but disabled, with key names only", () => {
   assert.equal(engineStatus({ ...env, GROK_ROUTE: "openrouter" }, getEngine("grok")!).enabled, true);
   assert.equal(engineStatus({ ...allKeys, ENGINES_DISABLED: "deepgram" }, getEngine("deepgram")!).enabled, false);
   assert.ok(!JSON.stringify(listEngines(allKeys)).includes('"k"'), "never echoes key values");
+});
+
+test("both speech keys prefer AssemblyAI unless an admin picked an engine", () => {
+  const env = { ...allKeys, STT_ENGINE: "deepgram", ADMIN_EMAILS: "admin@x.com" } as Partial<AppEnv>;
+  const preferred = bilingualPrimary(env, chooseEngine(env, "user@x.com", null));
+  assert.ok(preferred.ok && preferred.engine.id === "assemblyai");
+  const override = bilingualPrimary(env, chooseEngine(env, "admin@x.com", "deepgram"), "deepgram");
+  assert.ok(override.ok && override.engine.id === "deepgram");
+  const onlyDeepgram = bilingualPrimary({ DEEPGRAM_API_KEY: "k", STT_ENGINE: "deepgram" } as Partial<AppEnv>, chooseEngine({ DEEPGRAM_API_KEY: "k", STT_ENGINE: "deepgram" } as Partial<AppEnv>, null, null));
+  assert.ok(onlyDeepgram.ok && onlyDeepgram.engine.id === "deepgram");
 });
 
 test("engine choice: config default; only admins override", () => {

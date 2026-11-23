@@ -15,7 +15,7 @@ const steps = [
   {
     n: "02",
     title: "Check every switch",
-    body: "Spanish stays underlined. The ⇄ mark sits on the first word after the language changes. Read that word before you quote it.",
+    body: "Each word keeps an ES or EN chip. The first word after a language change is marked Review suggested. Read that word before you quote it.",
   },
   {
     n: "03",

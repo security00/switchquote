@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TrackedLink } from "@/components/TrackedLink";
 import { LogoMark } from "@/components/Logo";
 import { site } from "@/lib/site";
 
@@ -18,8 +19,17 @@ export function Footer() {
             </p>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <TrackedLink href="/app" src="footer-cta" className="text-ink-soft hover:text-accent">
+              Transcribe
+            </TrackedLink>
             <Link href="/pricing" className="text-ink-soft hover:text-accent">
               Pricing
+            </Link>
+            <Link href="/spanglish-transcription" className="text-ink-soft hover:text-accent">
+              Spanglish
+            </Link>
+            <Link href="/vs/sonix" className="text-ink-soft hover:text-accent">
+              Vs Sonix
             </Link>
             <Link href="/privacy" className="text-ink-soft hover:text-accent">
               Privacy

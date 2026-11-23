@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { applyTranscriptEdit, formatQuote, segmentsFromDeepgram, switchPoints, toJson, toSrt, toTxt, type Transcript } from "./transcript";
+import { applyTranscriptEdit, formatQuote, segmentsFromDeepgram, switchPoints, toCsv, toJson, toNvivo, toSrt, toTxt, toVtt, type Transcript } from "./transcript";
 
 const dg = {
   metadata: { duration: 5 },
@@ -95,4 +95,44 @@ test("renames, corrections, and pull quotes use the journalist's text", () => {
   if (!dropped.ok) return;
   assert.equal(dropped.transcript.segments.length, 1);
   assert.deepEqual(dropped.transcript.translation, ["But they said no."]);
+});
+
+test("speaker codes, notes, translation edits, and find-replace stay in every export", () => {
+  const t: Transcript = { id: "x", filename: "a.wav", durationSec: 5, engine: "deepgram/nova-3", createdAt: 0, segments: segmentsFromDeepgram(dg), translation: ["But they said no.", "Right?"] };
+  const named = applyTranscriptEdit(t, { op: "anonymize" });
+  assert.equal(named.ok, true);
+  if (!named.ok) return;
+  assert.equal(named.transcript.speakers?.["0"], "P01");
+  assert.equal(named.transcript.speakers?.["1"], "P02");
+  const noted = applyTranscriptEdit(named.transcript, { op: "note", si: 0, note: "Fact-check this quote" });
+  assert.equal(noted.ok, true);
+  if (!noted.ok) return;
+  const reviewed = applyTranscriptEdit(noted.transcript, { op: "review_word", si: 0, wi: 2, reviewed: true });
+  assert.equal(reviewed.ok, true);
+  if (!reviewed.ok) return;
+  assert.equal(reviewed.transcript.segments[0].words[2].reviewed, true);
+  const replaced = applyTranscriptEdit(reviewed.transcript, { op: "replace", find: "ellos", replacement: "ellas", all: true });
+  assert.equal(replaced.ok, true);
+  if (!replaced.ok) return;
+  assert.equal(replaced.transcript.segments[0].words[1].w, "ellas");
+  assert.equal(replaced.transcript.translation?.[0], "");
+  const english = applyTranscriptEdit(replaced.transcript, { op: "translation", si: 0, text: "But they said no, the women." });
+  assert.equal(english.ok, true);
+  if (!english.ok) return;
+  const out = english.transcript;
+  assert.match(toTxt(out), /P01 \(mixed\): Pero ellas said no\./);
+  assert.match(toTxt(out), /langs: es es en\* en/);
+  assert.match(toTxt(out), /note: Fact-check this quote/);
+  assert.match(toTxt(out), /EN: But they said no, the women\./);
+  assert.match(toSrt(out), /P01: Pero ellas said no\./);
+  assert.match(toVtt(out), /^WEBVTT/);
+  assert.match(toVtt(out), /00:00:00\.000 --> 00:00:02\.000/);
+  assert.match(toCsv(out), /start,end,speaker,word,language,confidence,switch_point/);
+  assert.match(toCsv(out), /P01,said,en,,true/);
+  assert.match(toNvivo(out), /speaker\ttimestamp\tlanguage\ttext/);
+  assert.match(toNvivo(out), /P01\t00:00:00\tmixed\tPero ellas said no\. \[note: Fact-check this quote\] \[EN: But they said no, the women\.\]/);
+  const json = JSON.parse(toJson(out));
+  assert.equal(json.segments[0].note, "Fact-check this quote");
+  assert.equal(json.segments[0].words[2].switch_point, true);
+  assert.equal(json.segments[0].words[2].reviewed, true);
 });

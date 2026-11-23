@@ -7,22 +7,23 @@
  * target language code, segment language = text chip.
  */
 :root {
-  --paper: #f4f5f7;
-  --surface: #ffffff;
-  --ink: #0f1b2d;
-  --ink-soft: #475467;
-  --ink-faint: #667085;
-  --rule: #dfe3ea;
-  --rule-strong: #c9d0db;
-  --accent: #1b3d6e;
-  --accent-strong: #11284b;
-  --accent-tint: #e9eef6;
-  --es: #a83a0a;
-  --es-tint: #fdeee3;
-  --es-line: #d55e00;
-  --en: #0b5f99;
-  --en-tint: #e7f1f9;
-  --mark: #ffd84d;
+  --paper: #f3efe4;
+  --surface: #fffdf8;
+  --ink: #1c1915;
+  --ink-soft: #4a433a;
+  --ink-faint: #74695c;
+  --rule: #e4d9c8;
+  --rule-strong: #cfc3ae;
+  --accent: #1e3a5f;
+  --accent-strong: #14283f;
+  --accent-tint: #e7eef6;
+  --es: #9a3412;
+  --es-tint: #fde7d6;
+  --es-line: #c2410c;
+  --en: #0f4c81;
+  --en-tint: #e5f0f8;
+  --mark: #f3d27a;
+  --brass: #8d6a2f;
 }
 
 @theme inline {
@@ -42,6 +43,7 @@
   --color-en: var(--en);
   --color-en-tint: var(--en-tint);
   --color-mark: var(--mark);
+  --color-brass: var(--brass);
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
   --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
@@ -107,4 +109,103 @@ body {
 }
 .switch-word {
   font-weight: 600;
+}
+.lang-en {
+  background: var(--en-tint);
+  color: var(--en);
+  text-decoration: underline dotted var(--en);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.lang-other {
+  text-decoration: underline dashed var(--ink-faint);
+  text-underline-offset: 4px;
+}
+.lang-chip {
+  display: inline-block;
+  margin-right: 3px;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.58em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  vertical-align: 0.2em;
+}
+.lang-chip-es {
+  background: var(--es-tint);
+  color: var(--es);
+  box-shadow: inset 0 -2px 0 var(--es-line);
+}
+.lang-chip-en {
+  background: var(--en-tint);
+  color: var(--en);
+  box-shadow: inset 0 -2px 0 var(--en);
+}
+.lang-chip-other {
+  background: var(--paper);
+  color: var(--ink-faint);
+  box-shadow: inset 0 0 0 1px var(--rule-strong);
+}
+.review-flag {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 4px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.58em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+  text-transform: uppercase;
+  vertical-align: 0.2em;
+}
+.review-flag-done {
+  background: var(--accent);
+}
+.review-suggested {
+  background: var(--mark);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.conf-low {
+  box-shadow: inset 0 -2px 0 #9a3412;
+}
+.find-hit {
+  outline: 2px solid var(--brass);
+  outline-offset: 1px;
+}
+.suggestion-hint {
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--brass);
+  font-family: var(--font-mono);
+  font-size: 0.58em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  vertical-align: 0.2em;
+  box-shadow: inset 0 0 0 1px var(--brass);
+}
+[data-lang-color="off"] .lang-es,
+[data-lang-color="off"] .lang-en,
+[data-lang-color="off"] .lang-chip-es,
+[data-lang-color="off"] .lang-chip-en {
+  background: transparent;
+  color: inherit;
+}
+[data-lang-color="off"] .lang-chip-es,
+[data-lang-color="off"] .lang-chip-en {
+  box-shadow: inset 0 0 0 1px var(--rule-strong);
+}
+[data-confidence="off"] .conf-low {
+  box-shadow: none;
 }

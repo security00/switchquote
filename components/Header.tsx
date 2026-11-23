@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import { LogoMark } from "@/components/Logo";
+import { useSrc } from "@/components/useSrc";
+import { hrefWithSrc } from "@/lib/src";
 import { navLinks, site } from "@/lib/site";
 
 type Me = { signedIn?: boolean; googleConfigured?: boolean; email?: string | null; name?: string | null; image?: string | null };
@@ -14,6 +16,7 @@ export function Header() {
   const onHome = pathname === "/";
   const links = onHome ? navLinks.filter((link) => link.href !== "/app") : navLinks;
   const [me, setMe] = useState<Me | null>(null);
+  const storedSrc = useSrc();
 
   useEffect(() => {
     let cancel = false;
@@ -44,7 +47,7 @@ export function Header() {
         <div className="flex items-center gap-2">
           <nav className="hidden items-center gap-1 text-sm font-medium md:flex" aria-label="Main">
             {links.map((link) => (
-              <Link key={link.href} href={link.href} className="rounded-md px-3 py-2 text-ink-soft transition-colors hover:bg-paper hover:text-ink">
+              <Link key={link.href} href={navHref(link.href, storedSrc)} className="rounded-md px-2 py-2 text-[13px] text-ink-soft transition-colors hover:bg-paper hover:text-ink">
                 {link.label}
               </Link>
             ))}
@@ -61,7 +64,7 @@ export function Header() {
             </summary>
             <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-lg border border-rule bg-surface py-1 shadow-lg">
               {links.map((link) => (
-                <Link key={link.href} href={link.href} className="block px-4 py-2.5 text-sm text-ink hover:bg-paper">
+                <Link key={link.href} href={navHref(link.href, storedSrc)} className="block px-4 py-2.5 text-sm text-ink hover:bg-paper">
                   {link.label}
                 </Link>
               ))}
@@ -74,14 +77,20 @@ export function Header() {
 }
 
 function AccountControl({ me, pathname }: { me: Me | null; pathname: string }) {
+  const storedSrc = useSrc();
   if (!me?.googleConfigured) return null;
-  const back = pathname || "/";
+  const back = hrefWithSrc(pathname || "/", storedSrc || "nav-top");
   if (me.signedIn) return <AccountMenu me={me} back={back} />;
   return (
     <button type="button" onClick={() => signIn("google", { redirectTo: back })} className="rounded-md bg-accent px-3.5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-strong">
       Sign in
     </button>
   );
+}
+
+function navHref(href: string, stored: string): string {
+  if (href === "/app") return hrefWithSrc(href, stored || "nav-top");
+  return stored ? hrefWithSrc(href, stored) : href;
 }
 
 function AccountMenu({ me, back }: { me: Me; back: string }) {

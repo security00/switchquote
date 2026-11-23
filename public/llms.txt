@@ -8,15 +8,17 @@ A visitor can rename a speaker, correct a word, and copy a quote on the built-in
 
 Audio is sent to Deepgram to make the transcript and is not stored by SwitchQuote. SwitchQuote does not use audio or transcripts to train models. Transcripts are kept for 30 days, or until the account holder deletes them. The service is not end-to-end encrypted. Google handles sign-in. Stripe processes payments. Cloudflare hosts the app. SwitchQuote does not sell this data.
 
-Transcripts are AI drafts. Verify every quote before publishing. Sample panels on the samples page are fictional illustrations, not output from a live upload. SwitchQuote does not offer anonymous free transcription minutes.
+Transcripts are AI drafts. Verify every quote before publishing. Sample panels on the samples page are fictional illustrations, not output from a live upload. SwitchQuote does not offer anonymous transcription. The one-time signup grant does not require a credit card. SwitchQuote does not publish an accuracy percentage and does not invent customer stories. The whole site stays out of search indexes during this test (`site.indexable` is false).
 
 ## Start here
 
-- [Home](https://switchquote.potter-faa.workers.dev/): Sample transcript open on arrival, plus upload for a signed-in account.
+- [Home](https://switchquote.potter-faa.workers.dev/): Upload entry and an illustrative sample wall. Transcribing your own file needs Google sign-in.
 - [Upload](https://switchquote.potter-faa.workers.dev/app): Sign in with Google and transcribe an interview file you control.
 - [How it works](https://switchquote.potter-faa.workers.dev/how-it-works): Transcribe, don't translate, and the three desk steps.
 - [For journalists](https://switchquote.potter-faa.workers.dev/for-journalists): Deadlines, attribution, and checking a quote.
-- [Pricing](https://switchquote.potter-faa.workers.dev/pricing): Starter, Pro, and Studio plans, plus one-time credit packs, for allowlisted accounts.
+- [Pricing](https://switchquote.potter-faa.workers.dev/pricing): Starter, Pro, and Studio plans, plus one-time credit packs, for allowlisted accounts. No credit card is required for the one-time signup grant of 20 credits (about 20 minutes). Google sign-in is required. There is no anonymous transcription.
+- [Spanglish transcription](https://switchquote.potter-faa.workers.dev/spanglish-transcription): Page for mixed Spanish–English interviews that switch mid-sentence. Both languages stay in the transcript, and switches are marked for review. The sample is a fictional illustration.
+- [SwitchQuote vs Sonix](https://switchquote.potter-faa.workers.dev/vs/sonix): Comparison of SwitchQuote and Sonix for bilingual interviews. It quotes Sonix's public note on mid-sentence switching and two October 2026 list prices. Where this page has no cited public source, the cell says so.
 
 ## Optional
 

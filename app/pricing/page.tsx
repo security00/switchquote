@@ -14,7 +14,7 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
       <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-es">Private test</p>
       <h1 className="mt-2 text-[36px] leading-tight sm:text-[48px]">Credits for interview transcription</h1>
       <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-ink-soft sm:text-base">
-        One credit is about one minute of audio on the default engine. Subscriptions add a monthly allotment. A yearly plan is billed once a year and still adds that allotment each month, not as a lump. Packs are a one-time purchase and last 24 months.
+        No credit card required. The one-time signup grant is 20 free credits ≈ 20 minutes. Google sign-in is required — there is no anonymous transcription. One credit is about one minute of audio on the default engine. Subscriptions add a monthly allotment. A yearly plan is billed once a year and still adds that allotment each month, not as a lump. Packs are a one-time purchase and last 24 months.
       </p>
       <PricingBoard canceled={checkout === "cancel"} />
     </section>

@@ -8,6 +8,8 @@ import { durationLabel, type Transcript } from "@/lib/transcript";
 import { formatCreditAmount } from "@/lib/credit-units";
 import { DeskGuide } from "@/components/DeskGuide";
 import { TranscriptView } from "@/components/TranscriptView";
+import { useSrc } from "@/components/useSrc";
+import { hrefWithSrc } from "@/lib/src";
 
 type Me = {
   signedIn: boolean;
@@ -19,6 +21,7 @@ type Me = {
   email?: string | null;
   access?: "open" | "allowed" | "waitlist";
   creditsLeft?: number;
+  signupCredits?: number;
   transcripts?: { id: string; filename: string; duration_sec: number; status: string; created_at: number }[];
 };
 
@@ -35,15 +38,31 @@ declare global {
 
 const ACCEPT = ".mp3,.m4a,.mp4,.wav,.ogg,.opus,.flac,audio/*,video/mp4";
 
-export function TranscribeApp({ introTop, notice, startWithSample = false }: { introTop?: React.ReactNode; notice?: string | null; startWithSample?: boolean } = {}) {
+export function TranscribeApp({
+  introTop,
+  notice,
+  startWithSample = false,
+  variant = "desk",
+  src,
+}: {
+  introTop?: React.ReactNode;
+  notice?: string | null;
+  startWithSample?: boolean;
+  variant?: "desk" | "hero";
+  src?: string;
+} = {}) {
   const [me, setMe] = useState<Me | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState<"" | "upload" | "translate">("");
   const [error, setError] = useState("");
   const [transcript, setTranscript] = useState<Transcript | null>(() => (startWithSample ? structuredClone(sampleTranscript) : null));
   const [token, setToken] = useState("");
+  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
+  const playbackRef = useRef<string | null>(null);
+  const storedSrc = useSrc();
+  const attribution = src || storedSrc;
 
   const loadMe = useCallback(async () => {
     const res = await fetch("/api/me", { cache: "no-store" });
@@ -64,6 +83,22 @@ export function TranscribeApp({ introTop, notice, startWithSample = false }: { i
   const smokeGuest = Boolean(me && !me.signedIn && me.smokeAnon);
   const canUse = Boolean((me?.signedIn && me.access !== "waitlist") || smokeGuest);
   const back = startWithSample ? "/" : "/app";
+  const signInTo = hrefWithSrc(variant === "hero" ? "/app" : back, attribution);
+
+  useEffect(() => {
+    return () => {
+      if (playbackRef.current) URL.revokeObjectURL(playbackRef.current);
+    };
+  }, []);
+
+  function rememberFile(next: File | null) {
+    setFile(next);
+    if (!next) return;
+    if (playbackRef.current) URL.revokeObjectURL(playbackRef.current);
+    const url = URL.createObjectURL(next);
+    playbackRef.current = url;
+    setPlaybackUrl(url);
+  }
 
   useEffect(() => {
     if (!canUse || !me?.turnstileSiteKey || !widgetRef.current) return;
@@ -181,7 +216,7 @@ export function TranscribeApp({ introTop, notice, startWithSample = false }: { i
           {startWithSample ? (
             <button
               type="button"
-              onClick={() => me.googleConfigured && signIn("google", { redirectTo: back })}
+              onClick={() => me.googleConfigured && signIn("google", { redirectTo: signInTo })}
               disabled={!me.googleConfigured}
               className="mt-4 w-full rounded-md border border-dashed border-rule-strong bg-paper px-4 py-6 text-left text-sm text-ink-soft hover:border-accent/50 disabled:cursor-not-allowed"
             >
@@ -190,12 +225,13 @@ export function TranscribeApp({ introTop, notice, startWithSample = false }: { i
             </button>
           ) : null}
           {me.googleConfigured ? (
-            <button onClick={() => signIn("google", { redirectTo: back })} className="mt-4 w-full rounded-md bg-accent px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-accent-strong sm:w-auto">
+            <button onClick={() => signIn("google", { redirectTo: signInTo })} className="mt-4 w-full rounded-md bg-accent px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-accent-strong sm:w-auto">
               {startWithSample ? "Sign in to upload" : "Continue with Google"}
             </button>
           ) : (
-            <p className="mt-4 rounded-md border border-dashed border-rule-strong bg-paper px-3 py-2.5 text-sm text-ink-soft">Google sign-in isn&apos;t switched on yet.</p>
+            <p className="mt-4 rounded-md border border-dashed border-rule-strong bg-paper px-3 py-2.5 text-sm text-ink-soft">Google sign-in isn&apos;t switched on yet. Transcription stays signed-in only — there is no anonymous generation.</p>
           )}
+          <p className="mt-3 text-sm leading-relaxed text-ink-soft">{grantLine(me.signupCredits)}</p>
         </div>
       )}
 
@@ -230,7 +266,7 @@ export function TranscribeApp({ introTop, notice, startWithSample = false }: { i
             id="audio"
             type="file"
             accept={ACCEPT}
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => rememberFile(e.target.files?.[0] ?? null)}
             className="mt-4 block w-full cursor-pointer rounded-md border border-rule-strong bg-paper text-sm text-ink-soft file:mr-3 file:cursor-pointer file:border-0 file:border-r file:border-rule-strong file:bg-surface file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-ink hover:border-accent/50"
           />
           <div ref={widgetRef} className="mt-3 min-h-[65px]" />
@@ -261,6 +297,33 @@ export function TranscribeApp({ introTop, notice, startWithSample = false }: { i
     </div>
   );
 
+  if (variant === "hero") {
+    return (
+      <div>
+        {notice ? (
+          <p className="mb-6 rounded-md border border-rule bg-surface px-4 py-3 text-sm leading-relaxed text-ink-soft" role="status">
+            {notice}
+          </p>
+        ) : null}
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.9fr)]">
+          <div>{introTop}</div>
+          <div>{toolColumn}</div>
+        </div>
+        {transcript ? (
+          <TranscriptView
+            transcript={transcript}
+            busy={busy}
+            persist
+            onTranslate={() => void translate()}
+            onDelete={() => void remove()}
+            audioUrl={playbackUrl}
+            onChange={setTranscript}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div>
       {notice ? (
@@ -280,6 +343,7 @@ export function TranscribeApp({ introTop, notice, startWithSample = false }: { i
                 flushTop
                 onTranslate={() => void translate()}
                 onDelete={() => void remove()}
+                audioUrl={playbackUrl}
                 onChange={setTranscript}
               />
             ) : null}
@@ -304,9 +368,17 @@ export function TranscribeApp({ introTop, notice, startWithSample = false }: { i
           busy={busy}
           onTranslate={() => void translate()}
           onDelete={() => void remove()}
+          audioUrl={playbackUrl}
           onChange={setTranscript}
         />
       ) : null}
     </div>
   );
+}
+
+function grantLine(credits: number | undefined): string {
+  if (typeof credits === "number" && credits > 0) {
+    return `No credit card required. One-time signup grant: ${credits} free credits ≈ ${credits} minutes. Google sign-in. No anonymous transcription.`;
+  }
+  return "No credit card required. Google sign-in is required. SwitchQuote does not transcribe anonymously.";
 }

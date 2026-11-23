@@ -54,6 +54,8 @@ export type EngineInput = {
   referer: string;
   /** Test seam; defaults to global fetch. */
   fetchImpl?: typeof fetch;
+  /** Aborts an in-flight provider call (used to cap secondary switch verification). */
+  signal?: AbortSignal;
 };
 
 export type EngineOutput = {

@@ -1,2 +1,9 @@
+# Workers static assets are served before the Worker, so they never see
+# next.config.ts headers(). Apply the same robots policy as HTML responses.
+# https://developers.cloudflare.com/workers/static-assets/headers
+/*
+  X-Robots-Tag: noindex, nofollow
+
+# https://opennext.js.org/cloudflare/caching#static-assets-caching
 /_next/static/*
   Cache-Control: public,max-age=31536000,immutable

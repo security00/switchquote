@@ -17,8 +17,8 @@ Transcripts are AI drafts. Verify every quote before publishing. Sample panels o
 - [How it works](https://switchquote.potter-faa.workers.dev/how-it-works): Transcribe, don't translate, and the three desk steps.
 - [For journalists](https://switchquote.potter-faa.workers.dev/for-journalists): Deadlines, attribution, and checking a quote.
 - [Pricing](https://switchquote.potter-faa.workers.dev/pricing): Starter, Pro, and Studio plans, plus one-time credit packs, for allowlisted accounts. No credit card is required for the one-time signup grant of 20 credits (about 20 minutes). Google sign-in is required. There is no anonymous transcription.
-- [Spanglish transcription](https://switchquote.potter-faa.workers.dev/spanglish-transcription): Page for mixed Spanish–English interviews. Some body copy is still a placeholder.
-- [SwitchQuote vs Sonix](https://switchquote.potter-faa.workers.dev/vs/sonix): Comparison skeleton. It quotes Sonix's public note on mid-sentence switching and leaves unfinished cells marked for a copywriter.
+- [Spanglish transcription](https://switchquote.potter-faa.workers.dev/spanglish-transcription): Page for mixed Spanish–English interviews that switch mid-sentence. Both languages stay in the transcript, and switches are marked for review. The sample is a fictional illustration.
+- [SwitchQuote vs Sonix](https://switchquote.potter-faa.workers.dev/vs/sonix): Comparison of SwitchQuote and Sonix for bilingual interviews. It quotes Sonix's public note on mid-sentence switching and two October 2026 list prices. Where this page has no cited public source, the cell says so.
 
 ## Optional
 

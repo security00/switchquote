@@ -49,7 +49,7 @@ export default function VsSonixPage() {
       </p>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-          <caption className="sr-only">SwitchQuote and Sonix comparison skeleton</caption>
+          <caption className="sr-only">SwitchQuote and Sonix comparison</caption>
           <thead>
             <tr className="border-b border-rule text-ink-faint">
               <th className="py-2 pr-4 font-medium"> </th>
@@ -94,7 +94,7 @@ export default function VsSonixPage() {
         <p>It is not a page about meeting notes or auto-translation. SwitchQuote is in a private test. Transcription is invite-only, and allowlisted accounts can buy credits.</p>
       </div>
       <p className="mt-3 text-sm leading-relaxed text-ink-faint">
-        Cells marked pending are for the copywriter. The Sonix sentence and the two public prices are the only competitor figures on this page.
+        The Sonix sentence and the two public prices are the only competitor figures on this page.
       </p>
       <TrackedLink href="/app" src="vs-sonix" className="mt-8 inline-flex rounded-md bg-accent px-5 py-3 text-sm font-semibold text-white hover:bg-accent-strong">
         Try the interview desk
